@@ -8,6 +8,7 @@ import 'package:ondas_mobile/features/profile/domain/entities/user_profile.dart'
 import 'package:ondas_mobile/features/profile/domain/usecases/change_password_usecase.dart';
 import 'package:ondas_mobile/features/profile/domain/usecases/get_profile_usecase.dart';
 import 'package:ondas_mobile/features/profile/domain/usecases/update_profile_usecase.dart';
+import 'package:ondas_mobile/features/profile/domain/usecases/upload_avatar_usecase.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_state.dart';
@@ -16,11 +17,15 @@ class MockGetProfileUseCase extends Mock implements GetProfileUseCase {}
 
 class MockUpdateProfileUseCase extends Mock implements UpdateProfileUseCase {}
 
+class MockUploadAvatarUseCase extends Mock implements UploadAvatarUseCase {}
+
 class MockChangePasswordUseCase extends Mock implements ChangePasswordUseCase {}
 
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
 
 class FakeUpdateProfileParams extends Fake implements UpdateProfileParams {}
+
+class FakeUploadAvatarParams extends Fake implements UploadAvatarParams {}
 
 class FakeChangePasswordParams extends Fake implements ChangePasswordParams {}
 
@@ -28,6 +33,7 @@ void main() {
   late ProfileBloc bloc;
   late MockGetProfileUseCase mockGetProfile;
   late MockUpdateProfileUseCase mockUpdateProfile;
+  late MockUploadAvatarUseCase mockUploadAvatar;
   late MockChangePasswordUseCase mockChangePassword;
   late MockLogoutUseCase mockLogout;
 
@@ -38,19 +44,30 @@ void main() {
     role: 'USER',
   );
 
+  const tProfileWithAvatar = UserProfile(
+    id: 'uuid-1',
+    email: 'test@example.com',
+    displayName: 'Test User',
+    avatarUrl: 'http://192.168.1.1:9000/avatar.png',
+    role: 'USER',
+  );
+
   setUpAll(() {
     registerFallbackValue(FakeUpdateProfileParams());
+    registerFallbackValue(FakeUploadAvatarParams());
     registerFallbackValue(FakeChangePasswordParams());
   });
 
   setUp(() {
     mockGetProfile = MockGetProfileUseCase();
     mockUpdateProfile = MockUpdateProfileUseCase();
+    mockUploadAvatar = MockUploadAvatarUseCase();
     mockChangePassword = MockChangePasswordUseCase();
     mockLogout = MockLogoutUseCase();
     bloc = ProfileBloc(
       getProfileUseCase: mockGetProfile,
       updateProfileUseCase: mockUpdateProfile,
+      uploadAvatarUseCase: mockUploadAvatar,
       changePasswordUseCase: mockChangePassword,
       logoutUseCase: mockLogout,
     );
@@ -103,6 +120,38 @@ void main() {
       },
       act: (b) => b.add(const ProfileUpdateRequested(displayName: 'New Name')),
       expect: () => [const ProfileLoading(), const ProfileFailure('Update failed')],
+    );
+  });
+
+  group('ProfileBloc — ProfileAvatarUploadRequested', () {
+    blocTest<ProfileBloc, ProfileState>(
+      'emits [ProfileLoading, ProfileAvatarUploadSuccess] when upload succeeds',
+      build: () {
+        when(() => mockUploadAvatar(any()))
+            .thenAnswer((_) async => const Right(tProfileWithAvatar));
+        return bloc;
+      },
+      act: (b) => b.add(
+        const ProfileAvatarUploadRequested(filePath: '/data/user/0/avatar.jpg'),
+      ),
+      expect: () => [
+        const ProfileLoading(),
+        const ProfileAvatarUploadSuccess(tProfileWithAvatar),
+      ],
+    );
+
+    blocTest<ProfileBloc, ProfileState>(
+      'emits [ProfileLoading, ProfileFailure] when upload fails',
+      build: () {
+        when(() => mockUploadAvatar(any())).thenAnswer(
+          (_) async => const Left(ServerFailure(message: 'Upload failed')),
+        );
+        return bloc;
+      },
+      act: (b) => b.add(
+        const ProfileAvatarUploadRequested(filePath: '/data/user/0/avatar.jpg'),
+      ),
+      expect: () => [const ProfileLoading(), const ProfileFailure('Upload failed')],
     );
   });
 

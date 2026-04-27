@@ -107,7 +107,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('editProfileDialog_displayNameField')), findsOneWidget);
-      expect(find.byKey(const Key('editProfileDialog_avatarUrlField')), findsOneWidget);
+    });
+
+    testWidgets('avatar picker is visible when profile is loaded', (tester) async {
+      when(() => mockBloc.state).thenReturn(const ProfileLoaded(tProfile));
+
+      await tester.pumpWidget(buildSubject());
+      await tester.pump();
+
+      expect(find.byKey(const Key('profileScreen_avatarPicker')), findsOneWidget);
     });
 
     testWidgets('adds ProfileUpdateRequested when edit profile is submitted', (tester) async {
@@ -155,6 +163,7 @@ void main() {
       await tester.pumpWidget(buildSubject());
       await tester.pump();
 
+      await tester.ensureVisible(find.byKey(const Key('profileScreen_changePasswordButton')));
       await tester.tap(find.byKey(const Key('profileScreen_changePasswordButton')));
       await tester.pumpAndSettle();
 
@@ -164,9 +173,14 @@ void main() {
       );
       await tester.enterText(
         find.byKey(const Key('changePasswordDialog_newPasswordField')),
-        'newpass123',
+        'newpass12345',
+      );
+      await tester.enterText(
+        find.byKey(const Key('changePasswordDialog_confirmPasswordField')),
+        'newpass12345',
       );
 
+      await tester.ensureVisible(find.byKey(const Key('changePasswordDialog_submitButton')));
       await tester.tap(find.byKey(const Key('changePasswordDialog_submitButton')));
       await tester.pumpAndSettle();
 
@@ -174,7 +188,7 @@ void main() {
         () => mockBloc.add(
           const ProfileChangePasswordRequested(
             currentPassword: 'oldpass123',
-            newPassword: 'newpass123',
+            newPassword: 'newpass12345',
           ),
         ),
       ).called(1);
@@ -241,6 +255,31 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Password changed successfully'), findsOneWidget);
+    });
+
+    testWidgets('shows success SnackBar when ProfileAvatarUploadSuccess is emitted',
+        (tester) async {
+      const tProfileWithAvatar = UserProfile(
+        id: 'uuid-1',
+        email: 'test@example.com',
+        displayName: 'Test User',
+        avatarUrl: 'http://192.168.1.1:9000/avatar.png',
+        role: 'USER',
+      );
+      whenListen(
+        mockBloc,
+        Stream.fromIterable([
+          const ProfileLoading(),
+          const ProfileAvatarUploadSuccess(tProfileWithAvatar),
+        ]),
+        initialState: const ProfileLoaded(tProfile),
+      );
+
+      await tester.pumpWidget(buildSubject());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Avatar updated successfully'), findsOneWidget);
     });
   });
 }

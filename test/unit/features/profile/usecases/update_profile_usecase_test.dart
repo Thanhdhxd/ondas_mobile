@@ -30,7 +30,6 @@ void main() {
       when(
         () => mockRepository.updateProfile(
           displayName: any(named: 'displayName'),
-          avatarUrl: any(named: 'avatarUrl'),
         ),
       ).thenAnswer((_) async => const Right(tProfile));
 
@@ -40,33 +39,7 @@ void main() {
 
       expect(result, const Right(tProfile));
       verify(
-        () => mockRepository.updateProfile(
-          displayName: 'Updated Name',
-          avatarUrl: null,
-        ),
-      ).called(1);
-    });
-
-    test('should pass avatarUrl when provided', () async {
-      when(
-        () => mockRepository.updateProfile(
-          displayName: any(named: 'displayName'),
-          avatarUrl: any(named: 'avatarUrl'),
-        ),
-      ).thenAnswer((_) async => const Right(tProfile));
-
-      await useCase(
-        const UpdateProfileParams(
-          displayName: 'Updated Name',
-          avatarUrl: 'https://example.com/avatar.jpg',
-        ),
-      );
-
-      verify(
-        () => mockRepository.updateProfile(
-          displayName: 'Updated Name',
-          avatarUrl: 'https://example.com/avatar.jpg',
-        ),
+        () => mockRepository.updateProfile(displayName: 'Updated Name'),
       ).called(1);
     });
 
@@ -74,7 +47,6 @@ void main() {
       when(
         () => mockRepository.updateProfile(
           displayName: any(named: 'displayName'),
-          avatarUrl: any(named: 'avatarUrl'),
         ),
       ).thenAnswer((_) async => const Left(ServerFailure(message: 'Server error')));
 
