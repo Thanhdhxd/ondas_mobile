@@ -105,6 +105,7 @@ class _MiniPlayerBar extends StatelessWidget {
                     onPause: () => bloc.add(const PauseRequested()),
                     onSkipNext: () => bloc.add(const SkipNextRequested()),
                     onSkipPrevious: () => bloc.add(const SkipPreviousRequested()),
+                    onRepeatModeToggle: () {},
                     compact: true,
                   ),
                 ],

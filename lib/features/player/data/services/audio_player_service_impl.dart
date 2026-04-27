@@ -14,6 +14,7 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
   List<Song> _queue = [];
   int _currentIndex = 0;
   double _volume = 1.0;
+  RepeatMode _repeatMode = RepeatMode.off;
 
   StreamSubscription<PlayerState>? _playerStateSub;
   StreamSubscription<ProcessingState>? _processingStateSub;
@@ -24,12 +25,19 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
 
   void _onPlayerState(PlayerState state) {
     if (state.processingState == ProcessingState.completed) {
-      // Auto-advance queue
-      if (_currentIndex < _queue.length - 1) {
-        _currentIndex++;
-        _loadAndPlay(_queue[_currentIndex]);
-      } else {
-        _statusController.add(PlayerStatus.idle);
+      switch (_repeatMode) {
+        case RepeatMode.one:
+          _player.seek(Duration.zero).then((_) => _player.play());
+        case RepeatMode.all:
+          _currentIndex = (_currentIndex + 1) % _queue.length;
+          _loadAndPlay(_queue[_currentIndex]);
+        case RepeatMode.off:
+          if (_currentIndex < _queue.length - 1) {
+            _currentIndex++;
+            _loadAndPlay(_queue[_currentIndex]);
+          } else {
+            _statusController.add(PlayerStatus.idle);
+          }
       }
       return;
     }
@@ -49,7 +57,7 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
     try {
       _statusController.add(PlayerStatus.loading);
       await _player.setUrl(song.audioUrl);
-      await _player.play();
+      unawaited(_player.play());
     } catch (_) {
       _statusController.add(PlayerStatus.error);
     }
@@ -119,6 +127,14 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
     _volume = volume.clamp(0.0, 1.0);
     await _player.setVolume(_volume);
     _volumeController.add(_volume);
+  }
+
+  @override
+  RepeatMode get repeatMode => _repeatMode;
+
+  @override
+  Future<void> setRepeatMode(RepeatMode mode) async {
+    _repeatMode = mode;
   }
 
   @override

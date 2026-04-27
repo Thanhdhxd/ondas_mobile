@@ -51,7 +51,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         if (state is ResetPasswordSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Đặt lại mật khẩu thành công. Vui lòng đăng nhập.'),
+              content: Text('Password reset successful. Please log in.'),
               backgroundColor: AppColors.spotifyGreen,
             ),
           );
@@ -82,7 +82,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const OndasLogoWidget(subtitle: 'Đặt lại mật khẩu'),
+                    const OndasLogoWidget(subtitle: 'Reset Password'),
                     const SizedBox(height: AppSpacing.xl),
                     _ResetPasswordDescription(email: widget.email),
                     const SizedBox(height: AppSpacing.xxl),
@@ -112,7 +112,7 @@ class _ResetPasswordDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Nhập mã OTP đã được gửi đến $email và đặt mật khẩu mới.',
+      'Enter the OTP sent to $email and set a new password.',
       style: const TextStyle(color: AppColors.silver, fontSize: 14, height: 1.5),
       textAlign: TextAlign.center,
     );
@@ -143,16 +143,16 @@ class _ResetPasswordForm extends StatelessWidget {
         children: [
           AuthTextFieldWidget(
             fieldKey: const Key('resetPasswordScreen_otpField'),
-            label: 'Mã OTP',
+            label: 'OTP Code',
             hint: '123456',
             controller: otpController,
             keyboardType: TextInputType.number,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Vui lòng nhập mã OTP';
+                return 'Please enter the OTP code';
               }
               if (!RegExp(r'^\d{6}$').hasMatch(value.trim())) {
-                return 'Mã OTP phải gồm 6 chữ số';
+                return 'OTP must be 6 digits';
               }
               return null;
             },
@@ -160,16 +160,16 @@ class _ResetPasswordForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('resetPasswordScreen_newPasswordField'),
-            label: 'Mật khẩu mới',
+            label: 'New Password',
             hint: '••••••••',
             controller: newPasswordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Vui lòng nhập mật khẩu mới';
+                return 'Please enter your new password';
               }
               if (value.length < 8) {
-                return 'Mật khẩu phải có ít nhất 8 ký tự';
+                return 'Password must be at least 8 characters';
               }
               return null;
             },
@@ -177,16 +177,16 @@ class _ResetPasswordForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('resetPasswordScreen_confirmPasswordField'),
-            label: 'Xác nhận mật khẩu',
+            label: 'Confirm Password',
             hint: '••••••••',
             controller: confirmPasswordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Vui lòng xác nhận mật khẩu';
+                return 'Please confirm your password';
               }
               if (value != newPasswordController.text) {
-                return 'Mật khẩu không khớp';
+                return 'Passwords do not match';
               }
               return null;
             },
@@ -207,7 +207,7 @@ class _ResetPasswordForm extends StatelessWidget {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('ĐẶT LẠI MẬT KHẨU'),
+                    : const Text('RESET PASSWORD'),
               );
             },
           ),

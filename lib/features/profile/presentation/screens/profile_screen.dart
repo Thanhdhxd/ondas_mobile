@@ -203,6 +203,14 @@ class _ContentView extends StatelessWidget {
             onTap: () => _showChangePasswordDialog(context, bloc),
           ),
           const SizedBox(height: AppSpacing.md),
+          _SectionDivider(title: 'Activity'),
+          ProfileMenuItemWidget(
+            key: const Key('profileScreen_historyButton'),
+            icon: Icons.history,
+            label: 'Listening History',
+            onTap: () => context.push('/history'),
+          ),
+          const SizedBox(height: AppSpacing.md),
           _SectionDivider(title: 'Session'),
           ProfileMenuItemWidget(
             key: const Key('profileScreen_logoutButton'),

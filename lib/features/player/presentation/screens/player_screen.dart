@@ -237,10 +237,12 @@ class _ControlsSection extends StatelessWidget {
       status: state.status,
       hasPrevious: state.hasPrevious,
       hasNext: state.hasNext,
+      repeatMode: state.repeatMode,
       onPlay: () => bloc.add(const ResumeRequested()),
       onPause: () => bloc.add(const PauseRequested()),
       onSkipNext: () => bloc.add(const SkipNextRequested()),
       onSkipPrevious: () => bloc.add(const SkipPreviousRequested()),
+      onRepeatModeToggle: () => bloc.add(const RepeatModeToggled()),
     );
   }
 }

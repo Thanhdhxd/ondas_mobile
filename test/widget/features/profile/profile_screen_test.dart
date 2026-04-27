@@ -200,6 +200,7 @@ void main() {
       await tester.pumpWidget(buildSubject());
       await tester.pump();
 
+      await tester.ensureVisible(find.byKey(const Key('profileScreen_logoutButton')));
       await tester.tap(find.byKey(const Key('profileScreen_logoutButton')));
       await tester.pumpAndSettle();
 
@@ -213,6 +214,7 @@ void main() {
       await tester.pumpWidget(buildSubject());
       await tester.pump();
 
+      await tester.ensureVisible(find.byKey(const Key('profileScreen_logoutButton')));
       await tester.tap(find.byKey(const Key('profileScreen_logoutButton')));
       await tester.pumpAndSettle();
 

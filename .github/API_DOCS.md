@@ -17,6 +17,9 @@
 - [Genres](#genres)
 - [Home](#home)
 - [Play History](#play-history)
+  - [POST `/api/play-history`](#post-api-play-history)
+  - [GET `/api/play-history`](#get-api-play-history)
+- [Playlists](#playlists)
 - [Phân quyền](#phân-quyền)
 - [Mã lỗi thường gặp](#mã-lỗi-thường-gặp)
 
@@ -469,6 +472,28 @@ Xóa bài hát.
 
 ---
 
+### GET `/api/songs/{id}/stream`
+
+Stream audio bài hát. Chỉ trả về dữ liệu audio, **không** tự động ghi lịch sử hay tăng play count. Client cần gọi riêng `POST /api/play-history` khi bắt đầu phát.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Path Params:**
+| Param | Type | Mô tả |
+|---|---|---|
+| `id` | UUID | ID bài hát |
+
+**Request Headers:**
+| Header | Bắt buộc | Mô tả |
+|---|---|---|
+| `Range` | ❌ | Byte range, ví dụ: `bytes=0-65535` |
+
+**Response `200 OK`:** Toàn bộ file audio (không có `Range` header).
+
+**Response `206 Partial Content`:** Đoạn audio theo Range request (có `Content-Range` header).
+
+---
+
 ## Albums
 
 ### POST `/api/albums`
@@ -877,52 +902,33 @@ GET /api/home?trendingLimit=5&artistLimit=6&albumLimit=8 → custom limit
 
 ## Play History
 
-> **Lưu ý:** `play_count` của bài hát tăng khi gọi `POST /api/play-history` thành công. Client nên gọi API này sau khi user nghe được ≥ 30 giây để tránh tính lượt nghe không hợp lệ.
+> **Lưu ý:** `play_count` và lịch sử nghe **không** được ghi tự động qua stream. Client phải gọi `POST /api/play-history` một lần khi người dùng thực sự bắt đầu nghe bài.
 
 ### POST `/api/play-history`
 
-Ghi lại lượt nghe nhạc.
+Ghi một lượt nghe: lưu lịch sử và tăng `play_count` của bài hát.
 
 **Auth:** ✅ Yêu cầu (JWT)
 
 **Request Body:**
 | Field | Type | Bắt buộc | Mô tả |
 |---|---|---|---|
-| `songId` | UUID | ✅ | ID bài hát đã nghe |
-| `durationPlayedSeconds` | integer | ❌ | Số giây đã nghe trong lượt này |
-| `completed` | boolean | ❌ | Nghe hết bài hay chưa (mặc định `false`) |
+| `songId` | UUID | ✅ | ID bài hát |
 | `source` | string | ❌ | Nguồn nghe: `search`, `album`, `playlist`, `home`, `artist`, `favorites`, `history` |
 
 ```json
 {
   "songId": "uuid",
-  "durationPlayedSeconds": 210,
-  "completed": true,
   "source": "home"
 }
 ```
 
-**Response `201 Created`:**
+**Response `200 OK`:**
 ```json
-{
-  "success": true,
-  "message": "OK",
-  "data": {
-    "id": 1,
-    "song": {
-      "id": "uuid",
-      "title": "Nơi Này Có Anh",
-      "coverUrl": "https://...",
-      "durationSeconds": 210,
-      "audioUrl": "https://..."
-    },
-    "playedAt": "2026-04-27T15:30:00",
-    "durationPlayedSeconds": 210,
-    "completed": true,
-    "source": "home"
-  }
-}
+{ "success": true, "message": "OK", "data": null }
 ```
+
+**Response `404 Not Found`:** Nếu bài hát không tồn tại hoặc đang bị ẩn.
 
 ---
 
@@ -956,8 +962,6 @@ Lấy lịch sử nghe nhạc của user đang đăng nhập, sắp xếp theo t
           "audioUrl": "https://..."
         },
         "playedAt": "2026-04-27T15:30:00",
-        "durationPlayedSeconds": 210,
-        "completed": true,
         "source": "home"
       }
     ],
@@ -1001,6 +1005,229 @@ Xóa một mục lịch sử cụ thể. Chỉ xóa được mục thuộc về 
 ```
 
 **Response `404 Not Found`:** Nếu mục không tồn tại hoặc không thuộc user hiện tại.
+
+---
+
+## Playlists
+
+> Mỗi user quản lý playlist của chính mình. Playlist có thể là **public** (ai cũng xem được) hoặc **private** (chỉ chủ sở hữu).
+
+### POST `/api/playlists`
+
+Tạo playlist mới.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Content-Type:** `multipart/form-data`
+
+**Parts:**
+| Part | Type | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `data` | JSON (`CreatePlaylistRequest`) | ✅ | Thông tin playlist |
+| `cover` | File | ❌ | Ảnh bìa |
+
+**`CreatePlaylistRequest`:**
+| Field | Type | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `name` | string | ✅ | Tên playlist |
+| `description` | string | ❌ | Mô tả |
+| `isPublic` | boolean | ❌ | Công khai hay không (mặc định `false`) |
+
+```json
+{
+  "name": "Nhạc hay 2026",
+  "description": "Tuyển tập bài hát yêu thích",
+  "isPublic": true
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "id": "uuid",
+    "userId": "uuid",
+    "name": "Nhạc hay 2026",
+    "description": "Tuyển tập bài hát yêu thích",
+    "coverUrl": null,
+    "isPublic": true,
+    "totalSongs": 0,
+    "createdAt": "2026-04-27T10:00:00",
+    "updatedAt": "2026-04-27T10:00:00",
+    "songs": []
+  }
+}
+```
+
+---
+
+### PUT `/api/playlists/{id}`
+
+Cập nhật playlist. Chỉ chủ sở hữu mới được cập nhật.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Content-Type:** `multipart/form-data`
+
+**Path Params:**
+| Param | Type | Mô tả |
+|---|---|---|
+| `id` | UUID | ID playlist |
+
+**Parts:**
+| Part | Type | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `data` | JSON (`UpdatePlaylistRequest`) | ✅ | Partial update |
+| `cover` | File | ❌ | Ảnh bìa mới |
+
+**`UpdatePlaylistRequest` fields:** `name`, `description`, `isPublic` — tất cả đều optional.
+
+**Response `200 OK`:** Trả về `PlaylistResponse` đã cập nhật.
+
+---
+
+### GET `/api/playlists/{id}`
+
+Lấy chi tiết playlist kèm danh sách bài hát.
+
+**Auth:** ✅ Yêu cầu (JWT) — playlist private chỉ chủ sở hữu mới xem được.
+
+**Response `200 OK`:** Trả về `PlaylistResponse`.
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": {
+    "id": "uuid",
+    "userId": "uuid",
+    "name": "Nhạc hay 2026",
+    "description": "...",
+    "coverUrl": "https://...",
+    "isPublic": true,
+    "totalSongs": 2,
+    "createdAt": "2026-04-27T10:00:00",
+    "updatedAt": "2026-04-27T10:00:00",
+    "songs": [
+      {
+        "position": 1,
+        "addedAt": "2026-04-27T10:05:00",
+        "song": {
+          "id": "uuid",
+          "title": "Nơi Này Có Anh",
+          "coverUrl": "https://...",
+          "durationSeconds": 210,
+          "audioUrl": "https://..."
+        }
+      }
+    ]
+  }
+}
+```
+
+---
+
+### GET `/api/playlists`
+
+Lấy danh sách playlist có phân trang.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Query Params:**
+| Param | Type | Bắt buộc | Mặc định | Mô tả |
+|---|---|---|---|---|
+| `query` | string | ❌ | — | Tìm kiếm theo tên playlist |
+| `owner` | boolean | ❌ | `false` | `true` = chỉ lấy playlist của user hiện tại |
+| `isPublic` | boolean | ❌ | — | Lọc theo trạng thái công khai |
+| `page` | integer | ❌ | `0` | Trang (0-based) |
+| `size` | integer | ❌ | `20` | Số phần tử mỗi trang |
+
+**Ví dụ:**
+```
+GET /api/playlists?owner=true&page=0&size=20          → playlist của tôi
+GET /api/playlists?isPublic=true&page=0&size=20       → tất cả playlist public
+GET /api/playlists?query=nhac+hay&page=0&size=20      → tìm theo tên
+```
+
+**Response `200 OK`:** Trả về `PageResultDto<PlaylistResponse>`.
+
+---
+
+### DELETE `/api/playlists/{id}`
+
+Xóa playlist. Chỉ chủ sở hữu mới được xóa.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Response `200 OK`:**
+```json
+{ "success": true, "message": "OK", "data": null }
+```
+
+---
+
+### POST `/api/playlists/{id}/songs`
+
+Thêm bài hát vào playlist.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Path Params:**
+| Param | Type | Mô tả |
+|---|---|---|
+| `id` | UUID | ID playlist |
+
+**Request Body:**
+| Field | Type | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `songId` | UUID | ✅ | ID bài hát muốn thêm |
+
+```json
+{
+  "songId": "uuid"
+}
+```
+
+**Response `200 OK`:** Trả về `PlaylistResponse` đã cập nhật.
+
+---
+
+### DELETE `/api/playlists/{id}/songs/{songId}`
+
+Xóa bài hát khỏi playlist.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Path Params:**
+| Param | Type | Mô tả |
+|---|---|---|
+| `id` | UUID | ID playlist |
+| `songId` | UUID | ID bài hát muốn xóa |
+
+**Response `200 OK`:** Trả về `PlaylistResponse` đã cập nhật.
+
+---
+
+### PUT `/api/playlists/{id}/songs/reorder`
+
+Sắp xếp lại thứ tự bài hát trong playlist. Danh sách `songIds` xác định thứ tự mới.
+
+**Auth:** ✅ Yêu cầu (JWT)
+
+**Request Body:**
+| Field | Type | Bắt buộc | Mô tả |
+|---|---|---|---|
+| `songIds` | UUID[] | ✅ | Danh sách ID bài hát theo thứ tự mới |
+
+```json
+{
+  "songIds": ["uuid-b", "uuid-a", "uuid-c"]
+}
+```
+
+**Response `200 OK`:** Trả về `PlaylistResponse` với thứ tự đã cập nhật.
 
 ---
 

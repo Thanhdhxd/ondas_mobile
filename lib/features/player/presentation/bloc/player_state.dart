@@ -10,6 +10,7 @@ class PlayerState extends Equatable {
   final Duration position;
   final Duration duration;
   final double volume;
+  final RepeatMode repeatMode;
   final String? errorMessage;
 
   const PlayerState({
@@ -20,6 +21,7 @@ class PlayerState extends Equatable {
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.volume = 1.0,
+    this.repeatMode = RepeatMode.off,
     this.errorMessage,
   });
 
@@ -34,6 +36,7 @@ class PlayerState extends Equatable {
     Duration? position,
     Duration? duration,
     double? volume,
+    RepeatMode? repeatMode,
     String? errorMessage,
     bool clearCurrentSong = false,
     bool clearError = false,
@@ -46,6 +49,7 @@ class PlayerState extends Equatable {
       position: position ?? this.position,
       duration: duration ?? this.duration,
       volume: volume ?? this.volume,
+      repeatMode: repeatMode ?? this.repeatMode,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
@@ -59,6 +63,7 @@ class PlayerState extends Equatable {
         position,
         duration,
         volume,
+        repeatMode,
         errorMessage,
       ];
 }

@@ -48,6 +48,12 @@ abstract class AudioPlayerService {
   /// Set volume [0.0 - 1.0].
   Future<void> setVolume(double volume);
 
+  /// Current repeat mode.
+  RepeatMode get repeatMode;
+
+  /// Set repeat mode.
+  Future<void> setRepeatMode(RepeatMode mode);
+
   /// Release resources.
   Future<void> dispose();
 }

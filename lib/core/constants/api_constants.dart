@@ -40,6 +40,13 @@ class ApiConstants {
   static const String playHistory = '/api/play-history';
   static String playHistoryById(int id) => '/api/play-history/$id';
 
+  // Playlists
+  static const String playlists = '/api/playlists';
+  static String playlistById(String id) => '/api/playlists/$id';
+  static String playlistSongs(String id) => '/api/playlists/$id/songs';
+  static String playlistSongById(String id, String songId) =>
+      '/api/playlists/$id/songs/$songId';
+
   /// Host của máy tính dev — dùng để thay thế "localhost" trong URL ảnh
   /// trả về từ backend (MinIO/S3), vì device Android không resolve được "localhost".
   static const String devHost = '192.168.123.3';

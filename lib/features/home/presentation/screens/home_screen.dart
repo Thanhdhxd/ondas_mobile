@@ -100,7 +100,7 @@ class _ErrorView extends StatelessWidget {
           TextButton(
             key: const Key('homeScreen_retryButton'),
             onPressed: onRetry,
-            child: const Text('Thử lại', style: TextStyle(color: AppColors.spotifyGreen)),
+            child: const Text('Retry', style: TextStyle(color: AppColors.spotifyGreen)),
           ),
         ],
       ),
@@ -138,21 +138,21 @@ class _ContentView extends StatelessWidget {
                 children: [
                   if (trendingSongs.isNotEmpty) ...[
                     HomeSectionWidget(
-                      title: 'Đang thịnh hành',
+                      title: 'Trending',
                       child: _TrendingSongsList(songs: trendingSongs),
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                   if (featuredArtists.isNotEmpty) ...[
                     HomeSectionWidget(
-                      title: 'Nghệ sĩ nổi bật',
+                      title: 'Featured Artists',
                       child: _FeaturedArtistsList(artists: featuredArtists),
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                   if (newReleases.isNotEmpty) ...[
                     HomeSectionWidget(
-                      title: 'Mới phát hành',
+                      title: 'New Releases',
                       child: _NewReleasesList(albums: newReleases),
                     ),
                     const SizedBox(height: AppSpacing.xxl),

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/features/player/domain/entities/player_status.dart';
 
@@ -16,6 +16,8 @@ class PlayerControlsWidget extends StatelessWidget {
   final VoidCallback onPause;
   final VoidCallback onSkipNext;
   final VoidCallback onSkipPrevious;
+  final RepeatMode repeatMode;
+  final VoidCallback onRepeatModeToggle;
 
   /// When true: smaller icons, no seek affordance — suitable for mini player
   /// and notification controls.
@@ -30,6 +32,8 @@ class PlayerControlsWidget extends StatelessWidget {
     required this.onPause,
     required this.onSkipNext,
     required this.onSkipPrevious,
+    this.repeatMode = RepeatMode.off,
+    required this.onRepeatModeToggle,
     this.compact = false,
   });
 
@@ -38,6 +42,7 @@ class PlayerControlsWidget extends StatelessWidget {
     final playButtonSize = compact ? 36.0 : 64.0;
     final skipButtonSize = compact ? 20.0 : 32.0;
     final iconSpacing = compact ? 8.0 : 24.0;
+    const repeatButtonSize = 24.0;
 
     final isLoading = status == PlayerStatus.loading;
     final isPlaying = status == PlayerStatus.playing;
@@ -45,6 +50,15 @@ class PlayerControlsWidget extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        if (!compact)
+          _RepeatButton(
+            key: const Key('playerControls_repeatButton'),
+            repeatMode: repeatMode,
+            onTap: onRepeatModeToggle,
+          )
+        else
+          const SizedBox.shrink(),
+        SizedBox(width: compact ? 0 : iconSpacing),
         _SkipButton(
           key: const Key('playerControls_skipPreviousButton'),
           icon: Icons.skip_previous_rounded,
@@ -69,6 +83,10 @@ class PlayerControlsWidget extends StatelessWidget {
           enabled: hasNext && !isLoading,
           onTap: onSkipNext,
         ),
+        if (!compact)
+          SizedBox(width: iconSpacing),
+        if (!compact)
+          const SizedBox(width: repeatButtonSize),
       ],
     );
   }
@@ -144,6 +162,37 @@ class _SkipButton extends StatelessWidget {
         icon,
         color: enabled ? AppColors.white : AppColors.silver,
         size: size,
+      ),
+    );
+  }
+}
+
+class _RepeatButton extends StatelessWidget {
+  final RepeatMode repeatMode;
+  final VoidCallback onTap;
+
+  const _RepeatButton({
+    super.key,
+    required this.repeatMode,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = repeatMode != RepeatMode.off;
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Icon(
+            repeatMode == RepeatMode.one
+                ? Icons.repeat_one_rounded
+                : Icons.repeat_rounded,
+            color: isActive ? AppColors.spotifyGreen : AppColors.silver,
+            size: 24,
+          ),
+        ],
       ),
     );
   }

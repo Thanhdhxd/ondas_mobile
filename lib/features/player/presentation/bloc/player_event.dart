@@ -13,11 +13,12 @@ sealed class PlayerEvent extends Equatable {
 class PlaySongRequested extends PlayerEvent {
   final List<Song> songs;
   final int index;
+  final String? source;
 
-  const PlaySongRequested({required this.songs, required this.index});
+  const PlaySongRequested({required this.songs, required this.index, this.source});
 
   @override
-  List<Object?> get props => [songs, index];
+  List<Object?> get props => [songs, index, source];
 }
 
 class PauseRequested extends PlayerEvent {
@@ -52,6 +53,10 @@ class VolumeChanged extends PlayerEvent {
 
   @override
   List<Object?> get props => [volume];
+}
+
+class RepeatModeToggled extends PlayerEvent {
+  const RepeatModeToggled();
 }
 
 // ── Internal stream events (emitted by BLoC from service streams) ────────────
