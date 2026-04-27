@@ -20,6 +20,30 @@ import 'package:ondas_mobile/features/auth/domain/usecases/reset_password_usecas
 import 'package:ondas_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/forgot_password_bloc.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/reset_password_bloc.dart';
+import 'package:ondas_mobile/features/home/data/datasources/home_remote_datasource.dart';
+import 'package:ondas_mobile/features/home/data/datasources/home_remote_datasource_impl.dart';
+import 'package:ondas_mobile/features/home/data/repositories/home_repository_impl.dart';
+import 'package:ondas_mobile/features/home/domain/repositories/home_repository.dart';
+import 'package:ondas_mobile/features/home/domain/usecases/get_home_data_usecase.dart';
+import 'package:ondas_mobile/features/home/domain/usecases/get_home_data_usecase_impl.dart';
+import 'package:ondas_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:ondas_mobile/features/player/data/services/audio_player_service_impl.dart';
+import 'package:ondas_mobile/features/player/domain/services/audio_player_service.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/pause_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/pause_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/play_song_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/play_song_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/resume_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/resume_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/seek_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/seek_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/set_volume_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/set_volume_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/skip_next_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/skip_next_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/skip_previous_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/skip_previous_usecase_impl.dart';
+import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 import 'package:ondas_mobile/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:ondas_mobile/features/profile/data/datasources/profile_remote_datasource_impl.dart';
 import 'package:ondas_mobile/features/profile/data/repositories/profile_repository_impl.dart';
@@ -120,6 +144,58 @@ Future<void> setupDependencies() async {
       uploadAvatarUseCase: sl<UploadAvatarUseCase>(),
       changePasswordUseCase: sl<ChangePasswordUseCase>(),
       logoutUseCase: sl<LogoutUseCase>(),
+    ),
+  );
+
+  // ── Home ──────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<HomeRemoteDatasource>(
+    () => HomeRemoteDatasourceImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<HomeRepository>(
+    () => HomeRepositoryImpl(sl<HomeRemoteDatasource>()),
+  );
+  sl.registerLazySingleton<GetHomeDataUseCase>(
+    () => GetHomeDataUseCaseImpl(sl<HomeRepository>()),
+  );
+  sl.registerFactory<HomeBloc>(
+    () => HomeBloc(getHomeDataUseCase: sl<GetHomeDataUseCase>()),
+  );
+
+  // ── Player ────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<AudioPlayerService>(
+    () => AudioPlayerServiceImpl(),
+  );
+  sl.registerLazySingleton<PlaySongUseCase>(
+    () => PlaySongUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<PauseUseCase>(
+    () => PauseUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<ResumeUseCase>(
+    () => ResumeUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<SeekUseCase>(
+    () => SeekUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<SkipNextUseCase>(
+    () => SkipNextUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<SkipPreviousUseCase>(
+    () => SkipPreviousUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<SetVolumeUseCase>(
+    () => SetVolumeUseCaseImpl(sl<AudioPlayerService>()),
+  );
+  sl.registerLazySingleton<PlayerBloc>(
+    () => PlayerBloc(
+      playSongUseCase: sl<PlaySongUseCase>(),
+      pauseUseCase: sl<PauseUseCase>(),
+      resumeUseCase: sl<ResumeUseCase>(),
+      seekUseCase: sl<SeekUseCase>(),
+      skipNextUseCase: sl<SkipNextUseCase>(),
+      skipPreviousUseCase: sl<SkipPreviousUseCase>(),
+      setVolumeUseCase: sl<SetVolumeUseCase>(),
+      audioPlayerService: sl<AudioPlayerService>(),
     ),
   );
 }

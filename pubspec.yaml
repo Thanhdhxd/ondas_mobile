@@ -36,6 +36,9 @@ dependencies:
   # Functional programming (Either/Option)
   fpdart: ^1.1.0
 
+  # Audio playback
+  just_audio: ^0.9.46
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

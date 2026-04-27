@@ -13,6 +13,7 @@ import 'package:ondas_mobile/features/auth/presentation/screens/register_screen.
 import 'package:ondas_mobile/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:ondas_mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/library_screen.dart';
+import 'package:ondas_mobile/features/player/presentation/screens/player_screen.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
 import 'package:ondas_mobile/features/profile/presentation/screens/profile_screen.dart';
@@ -28,6 +29,29 @@ class AppRouter {
       initialLocation: '/home',
       redirect: _guard,
       routes: [
+        GoRoute(
+          path: '/player',
+          name: 'player',
+          pageBuilder: (context, state) => CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: const PlayerScreen(),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              final curve = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeInOutCubic,
+              );
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(curve),
+                child: child,
+              );
+            },
+          ),
+        ),
         GoRoute(
           path: '/login',
           name: 'login',

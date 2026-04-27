@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
+import 'package:ondas_mobile/features/player/presentation/widgets/mini_player_widget.dart';
 
 class MainShellScreen extends StatelessWidget {
   final Widget child;
@@ -27,7 +28,12 @@ class MainShellScreen extends StatelessWidget {
     final selectedIndex = _selectedIndex(context);
 
     return Scaffold(
-      body: child,
+      body: Column(
+        children: [
+          Expanded(child: child),
+          const MiniPlayerWidget(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: selectedIndex,
         onDestinationSelected: (index) => context.go(_tabs[index].path),

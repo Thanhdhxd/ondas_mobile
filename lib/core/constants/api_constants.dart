@@ -1,7 +1,7 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl = 'http://192.168.123.4:8080';
+  static const String baseUrl = 'http://$devHost:8080';
 
   // Auth
   static const String register = '/api/auth/register';
@@ -32,4 +32,25 @@ class ApiConstants {
   static const String genres = '/api/genres';
   static const String genresSearch = '/api/genres/search';
   static String genreById(int id) => '/api/genres/$id';
+
+  // Home
+  static const String home = '/api/home';
+
+  // Play History
+  static const String playHistory = '/api/play-history';
+  static String playHistoryById(int id) => '/api/play-history/$id';
+
+  /// Host của máy tính dev — dùng để thay thế "localhost" trong URL ảnh
+  /// trả về từ backend (MinIO/S3), vì device Android không resolve được "localhost".
+  static const String devHost = '192.168.123.3';
+
+  /// Chuyển relative path từ API thành absolute URL.
+  /// Nếu URL chứa "localhost", thay bằng [devHost] để device có thể truy cập.
+  static String? resolveUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path.replaceFirst('localhost', devHost);
+    }
+    return '$baseUrl$path';
+  }
 }
