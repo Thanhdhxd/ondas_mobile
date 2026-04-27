@@ -8,8 +8,10 @@ import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/domain/services/audio_player_service.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/pause_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/play_song_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/record_play_history_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/resume_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/seek_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/set_repeat_mode_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/set_volume_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/skip_next_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/skip_previous_usecase.dart';
@@ -30,6 +32,10 @@ class MockSkipNextUseCase extends Mock implements SkipNextUseCase {}
 class MockSkipPreviousUseCase extends Mock implements SkipPreviousUseCase {}
 
 class MockSetVolumeUseCase extends Mock implements SetVolumeUseCase {}
+
+class MockSetRepeatModeUseCase extends Mock implements SetRepeatModeUseCase {}
+
+class MockRecordPlayHistoryUseCase extends Mock implements RecordPlayHistoryUseCase {}
 
 class MockAudioPlayerService extends Mock implements AudioPlayerService {}
 
@@ -57,6 +63,8 @@ void main() {
   late MockSkipNextUseCase mockSkipNext;
   late MockSkipPreviousUseCase mockSkipPrevious;
   late MockSetVolumeUseCase mockSetVolume;
+  late MockSetRepeatModeUseCase mockSetRepeatMode;
+  late MockRecordPlayHistoryUseCase mockRecordPlayHistory;
   late MockAudioPlayerService mockService;
 
   // Stream controllers to drive service streams
@@ -67,6 +75,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(Duration.zero);
+    registerFallbackValue(RepeatMode.off);
   });
 
   setUp(() {
@@ -77,6 +86,8 @@ void main() {
     mockSkipNext = MockSkipNextUseCase();
     mockSkipPrevious = MockSkipPreviousUseCase();
     mockSetVolume = MockSetVolumeUseCase();
+    mockSetRepeatMode = MockSetRepeatModeUseCase();
+    mockRecordPlayHistory = MockRecordPlayHistoryUseCase();
     mockService = MockAudioPlayerService();
 
     statusController = StreamController<PlayerStatus>.broadcast();
@@ -106,7 +117,9 @@ void main() {
         skipNextUseCase: mockSkipNext,
         skipPreviousUseCase: mockSkipPrevious,
         setVolumeUseCase: mockSetVolume,
+        setRepeatModeUseCase: mockSetRepeatMode,
         audioPlayerService: mockService,
+        recordPlayHistoryUseCase: mockRecordPlayHistory,
       );
 
   group('PlayerBloc', () {
@@ -123,6 +136,10 @@ void main() {
       build: () {
         when(() => mockPlaySong(songs: any(named: 'songs'), index: any(named: 'index')))
             .thenAnswer((_) async {});
+        when(() => mockRecordPlayHistory(
+              songId: any(named: 'songId'),
+              source: any(named: 'source'),
+            )).thenAnswer((_) async {});
         when(() => mockService.currentSong).thenReturn(tSong);
         when(() => mockService.currentIndex).thenReturn(0);
         return buildBloc();
@@ -211,6 +228,40 @@ void main() {
         isA<PlayerState>().having((s) => s.volume, 'volume', 0.5),
       ],
       verify: (_) => verify(() => mockSetVolume(0.5)).called(1),
+    );
+
+    blocTest<PlayerBloc, PlayerState>(
+      'RepeatModeToggled cycles off → all → one → off',
+      build: () {
+        when(() => mockSetRepeatMode(any())).thenAnswer((_) async {});
+        return buildBloc();
+      },
+      act: (b) async {
+        b.add(const RepeatModeToggled()); // off → all
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        b.add(const RepeatModeToggled()); // all → one
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        b.add(const RepeatModeToggled()); // one → off
+      },
+      wait: const Duration(milliseconds: 50),
+      expect: () => [
+        isA<PlayerState>().having((s) => s.repeatMode, 'repeatMode', RepeatMode.all),
+        isA<PlayerState>().having((s) => s.repeatMode, 'repeatMode', RepeatMode.one),
+        isA<PlayerState>().having((s) => s.repeatMode, 'repeatMode', RepeatMode.off),
+      ],
+      verify: (_) {
+        verify(() => mockSetRepeatMode(RepeatMode.all)).called(1);
+        verify(() => mockSetRepeatMode(RepeatMode.one)).called(1);
+        verify(() => mockSetRepeatMode(RepeatMode.off)).called(1);
+      },
+    );
+
+    blocTest<PlayerBloc, PlayerState>(
+      'initial repeatMode is off',
+      build: () => buildBloc(),
+      verify: (b) {
+        expect(b.state.repeatMode, RepeatMode.off);
+      },
     );
 
     blocTest<PlayerBloc, PlayerState>(

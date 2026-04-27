@@ -3,6 +3,7 @@ import 'package:ondas_mobile/core/constants/api_constants.dart';
 import 'package:ondas_mobile/core/network/api_response.dart';
 import 'package:ondas_mobile/core/network/dio_client.dart';
 import 'package:ondas_mobile/features/profile/data/datasources/profile_remote_datasource.dart';
+import 'package:ondas_mobile/features/profile/data/models/play_history_item_model.dart';
 import 'package:ondas_mobile/features/profile/data/models/user_profile_model.dart';
 
 class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
@@ -63,5 +64,34 @@ class ProfileRemoteDatasourceImpl implements ProfileRemoteDatasource {
         'newPassword': newPassword,
       },
     );
+  }
+
+  @override
+  Future<PageResult<PlayHistoryItemModel>> getPlayHistory({
+    required int page,
+    required int size,
+  }) async {
+    final response = await _dioClient.get<Map<String, dynamic>>(
+      ApiConstants.playHistory,
+      queryParameters: {'page': page, 'size': size},
+    );
+    final apiResponse = ApiResponse.fromJson(
+      response.data!,
+      (json) => PageResult.fromJson(
+        json as Map<String, dynamic>,
+        PlayHistoryItemModel.fromJson,
+      ),
+    );
+    return apiResponse.data!;
+  }
+
+  @override
+  Future<void> deletePlayHistoryItem({required int id}) async {
+    await _dioClient.delete<void>(ApiConstants.playHistoryById(id));
+  }
+
+  @override
+  Future<void> clearPlayHistory() async {
+    await _dioClient.delete<void>(ApiConstants.playHistory);
   }
 }

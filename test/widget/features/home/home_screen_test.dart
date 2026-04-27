@@ -10,7 +10,6 @@ import 'package:ondas_mobile/features/home/domain/entities/song_summary.dart';
 import 'package:ondas_mobile/features/home/presentation/bloc/home_bloc.dart';
 import 'package:ondas_mobile/features/home/presentation/bloc/home_event.dart';
 import 'package:ondas_mobile/features/home/presentation/bloc/home_state.dart';
-import 'package:ondas_mobile/features/home/presentation/screens/home_screen.dart';
 
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 

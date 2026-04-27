@@ -14,10 +14,13 @@ import 'package:ondas_mobile/features/auth/presentation/screens/reset_password_s
 import 'package:ondas_mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/library_screen.dart';
 import 'package:ondas_mobile/features/player/presentation/screens/player_screen.dart';
+import 'package:ondas_mobile/features/profile/presentation/bloc/history_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
+import 'package:ondas_mobile/features/profile/presentation/screens/history_screen.dart';
 import 'package:ondas_mobile/features/profile/presentation/screens/profile_screen.dart';
 import 'package:ondas_mobile/features/search/presentation/screens/search_screen.dart';
+import 'package:ondas_mobile/features/playlist/presentation/screens/playlist_detail_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -86,6 +89,14 @@ class AppRouter {
             ),
           ),
         ),
+        GoRoute(
+          path: '/history',
+          name: 'history',
+          builder: (context, state) => BlocProvider<HistoryBloc>(
+            create: (_) => sl<HistoryBloc>(),
+            child: const HistoryScreen(),
+          ),
+        ),
         ShellRoute(
           builder: (context, state, child) => MainShellScreen(child: child),
           routes: [
@@ -103,6 +114,13 @@ class AppRouter {
               path: '/library',
               name: 'library',
               builder: (context, state) => const LibraryScreen(),
+            ),
+            GoRoute(
+              path: '/playlists/:id',
+              name: 'playlistDetail',
+              builder: (context, state) => PlaylistDetailScreen(
+                playlistId: state.pathParameters['id']!,
+              ),
             ),
             GoRoute(
               path: '/profile',

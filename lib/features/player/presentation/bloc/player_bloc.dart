@@ -5,8 +5,10 @@ import 'package:ondas_mobile/features/player/domain/entities/player_status.dart'
 import 'package:ondas_mobile/features/player/domain/services/audio_player_service.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/pause_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/play_song_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/record_play_history_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/resume_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/seek_usecase.dart';
+import 'package:ondas_mobile/features/player/domain/usecases/set_repeat_mode_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/set_volume_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/skip_next_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/skip_previous_usecase.dart';
@@ -21,7 +23,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final SkipNextUseCase _skipNext;
   final SkipPreviousUseCase _skipPrevious;
   final SetVolumeUseCase _setVolume;
+  final SetRepeatModeUseCase _setRepeatMode;
   final AudioPlayerService _service;
+  final RecordPlayHistoryUseCase _recordPlayHistory;
 
   StreamSubscription<dynamic>? _statusSub;
   StreamSubscription<Duration>? _positionSub;
@@ -36,7 +40,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     required SkipNextUseCase skipNextUseCase,
     required SkipPreviousUseCase skipPreviousUseCase,
     required SetVolumeUseCase setVolumeUseCase,
+    required SetRepeatModeUseCase setRepeatModeUseCase,
     required AudioPlayerService audioPlayerService,
+    required RecordPlayHistoryUseCase recordPlayHistoryUseCase,
   })  : _playSong = playSongUseCase,
         _pause = pauseUseCase,
         _resume = resumeUseCase,
@@ -44,7 +50,9 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
         _skipNext = skipNextUseCase,
         _skipPrevious = skipPreviousUseCase,
         _setVolume = setVolumeUseCase,
+        _setRepeatMode = setRepeatModeUseCase,
         _service = audioPlayerService,
+        _recordPlayHistory = recordPlayHistoryUseCase,
         super(const PlayerState()) {
     on<PlaySongRequested>(_onPlaySongRequested);
     on<PauseRequested>(_onPauseRequested);
@@ -53,6 +61,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     on<SkipNextRequested>(_onSkipNextRequested);
     on<SkipPreviousRequested>(_onSkipPreviousRequested);
     on<VolumeChanged>(_onVolumeChanged);
+    on<RepeatModeToggled>(_onRepeatModeToggled);
     on<PlayerStatusUpdated>(_onStatusUpdated);
     on<PlayerPositionUpdated>(_onPositionUpdated);
     on<PlayerDurationUpdated>(_onDurationUpdated);
@@ -90,6 +99,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       clearError: true,
     ));
     await _playSong(songs: event.songs, index: event.index);
+    final songId = event.songs[event.index].id;
+    _recordPlayHistory(songId: songId, source: event.source).ignore();
   }
 
   Future<void> _onPauseRequested(
@@ -155,6 +166,19 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   ) async {
     await _setVolume(event.volume);
     emit(state.copyWith(volume: event.volume));
+  }
+
+  Future<void> _onRepeatModeToggled(
+    RepeatModeToggled event,
+    Emitter<PlayerState> emit,
+  ) async {
+    final next = switch (state.repeatMode) {
+      RepeatMode.off => RepeatMode.all,
+      RepeatMode.all => RepeatMode.one,
+      RepeatMode.one => RepeatMode.off,
+    };
+    await _setRepeatMode(next);
+    emit(state.copyWith(repeatMode: next));
   }
 
   void _onStatusUpdated(PlayerStatusUpdated event, Emitter<PlayerState> emit) {

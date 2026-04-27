@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:ondas_mobile/core/error/failures.dart';
+import 'package:ondas_mobile/core/network/api_response.dart';
 import 'package:ondas_mobile/features/profile/data/datasources/profile_remote_datasource.dart';
+import 'package:ondas_mobile/features/profile/domain/entities/play_history_item.dart';
 import 'package:ondas_mobile/features/profile/domain/entities/user_profile.dart';
 import 'package:ondas_mobile/features/profile/domain/repositories/profile_repository.dart';
 
@@ -78,5 +80,44 @@ class ProfileRepositoryImpl implements ProfileRepository {
         e.message ??
         'Đã xảy ra lỗi không xác định.';
     return ServerFailure(message: message, statusCode: statusCode);
+  }
+
+  @override
+  Future<Either<Failure, PageResult<PlayHistoryItem>>> getPlayHistory({
+    required int page,
+    required int size,
+  }) async {
+    try {
+      final result = await _datasource.getPlayHistory(page: page, size: size);
+      return Right(result);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deletePlayHistoryItem({required int id}) async {
+    try {
+      await _datasource.deletePlayHistoryItem(id: id);
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> clearPlayHistory() async {
+    try {
+      await _datasource.clearPlayHistory();
+      return const Right(null);
+    } on DioException catch (e) {
+      return Left(_mapDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }
