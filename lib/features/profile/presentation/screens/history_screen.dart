@@ -122,7 +122,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         },
         builder: (context, state) => switch (state) {
           HistoryLoading() => const _LoadingView(),
-          HistoryLoaded(:final items, :final hasMore) when items.isEmpty =>
+          HistoryLoaded(:final items) when items.isEmpty =>
             const _EmptyView(),
           HistoryLoaded(:final items, :final hasMore) => _ListView(
               items: items,
@@ -241,7 +241,7 @@ class _ListView extends StatelessWidget {
       key: const Key('historyScreen_list'),
       controller: scrollController,
       itemCount: items.length + (isLoadingMore ? 1 : 0),
-      separatorBuilder: (_, __) => const Divider(
+      separatorBuilder: (_, _) => const Divider(
         height: 1,
         color: AppColors.darkCard,
         indent: AppSpacing.base,

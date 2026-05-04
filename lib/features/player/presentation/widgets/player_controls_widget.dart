@@ -19,6 +19,9 @@ class PlayerControlsWidget extends StatelessWidget {
   final RepeatMode repeatMode;
   final VoidCallback onRepeatModeToggle;
 
+  /// Called when the save/bookmark button is tapped. Only shown when not compact.
+  final VoidCallback? onSave;
+
   /// When true: smaller icons, no seek affordance — suitable for mini player
   /// and notification controls.
   final bool compact;
@@ -34,6 +37,7 @@ class PlayerControlsWidget extends StatelessWidget {
     required this.onSkipPrevious,
     this.repeatMode = RepeatMode.off,
     required this.onRepeatModeToggle,
+    this.onSave,
     this.compact = false,
   });
 
@@ -42,7 +46,6 @@ class PlayerControlsWidget extends StatelessWidget {
     final playButtonSize = compact ? 36.0 : 64.0;
     final skipButtonSize = compact ? 20.0 : 32.0;
     final iconSpacing = compact ? 8.0 : 24.0;
-    const repeatButtonSize = 24.0;
 
     final isLoading = status == PlayerStatus.loading;
     final isPlaying = status == PlayerStatus.playing;
@@ -86,7 +89,10 @@ class PlayerControlsWidget extends StatelessWidget {
         if (!compact)
           SizedBox(width: iconSpacing),
         if (!compact)
-          const SizedBox(width: repeatButtonSize),
+          _SaveButton(
+            key: const Key('playerControls_saveButton'),
+            onTap: onSave,
+          ),
       ],
     );
   }
@@ -162,6 +168,25 @@ class _SkipButton extends StatelessWidget {
         icon,
         color: enabled ? AppColors.white : AppColors.silver,
         size: size,
+      ),
+    );
+  }
+}
+
+class _SaveButton extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _SaveButton({super.key, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(
+        // Thay thành icon add to list
+        Icons.playlist_add_rounded,
+        color: onTap != null ? AppColors.white : AppColors.silver,
+        size: 24,
       ),
     );
   }

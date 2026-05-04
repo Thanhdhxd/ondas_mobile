@@ -1,9 +1,6 @@
-import 'package:dio/dio.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:ondas_mobile/core/error/failures.dart';
-import 'package:ondas_mobile/core/network/api_response.dart';
 import 'package:ondas_mobile/features/playlist/data/datasources/playlist_remote_datasource.dart';
-import 'package:ondas_mobile/features/playlist/domain/entities/playlist.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_detail.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 import 'package:ondas_mobile/features/playlist/domain/repositories/playlist_repository.dart';
 
 class PlaylistRepositoryImpl implements PlaylistRepository {
@@ -12,107 +9,59 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
   const PlaylistRepositoryImpl(this._datasource);
 
   @override
-  Future<Either<Failure, PageResult<Playlist>>> getMyPlaylists({
-    int page = 0,
-    int size = 20,
-  }) async {
-    try {
-      final result =
-          await _datasource.getMyPlaylists(page: page, size: size);
-      return Right(result);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+  Future<List<PlaylistSummary>> getMyPlaylists({required String songId}) {
+    return _datasource.getMyPlaylists(songId: songId);
   }
 
   @override
-  Future<Either<Failure, Playlist>> createPlaylist(
-      CreatePlaylistParams params) async {
-    try {
-      final result = await _datasource.createPlaylist(params);
-      return Right(result);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+  Future<void> addSongToPlaylist({
+    required String playlistId,
+    required String songId,
+  }) {
+    return _datasource.addSongToPlaylist(
+      playlistId: playlistId,
+      songId: songId,
+    );
   }
 
   @override
-  Future<Either<Failure, Playlist>> getPlaylistDetail(String id) async {
-    try {
-      final result = await _datasource.getPlaylistDetail(id);
-      return Right(result);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+  Future<void> removeSongFromPlaylist({
+    required String playlistId,
+    required String songId,
+  }) {
+    return _datasource.removeSongFromPlaylist(
+      playlistId: playlistId,
+      songId: songId,
+    );
   }
 
   @override
-  Future<Either<Failure, Playlist>> updatePlaylist(
-      UpdatePlaylistParams params) async {
-    try {
-      final result = await _datasource.updatePlaylist(params);
-      return Right(result);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+  Future<PlaylistSummary> createPlaylist({
+    required String name,
+    String? coverImageUrl,
+  }) {
+    return _datasource.createPlaylist(name: name, coverImageUrl: coverImageUrl);
   }
 
   @override
-  Future<Either<Failure, void>> deletePlaylist(String id) async {
-    try {
-      await _datasource.deletePlaylist(id);
-      return const Right(null);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
+  Future<List<PlaylistSummary>> getLibraryPlaylists() =>
+      _datasource.getLibraryPlaylists();
 
   @override
-  Future<Either<Failure, Playlist>> addSongToPlaylist(
-      AddSongToPlaylistParams params) async {
-    try {
-      final result = await _datasource.addSongToPlaylist(params);
-      return Right(result);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
+  Future<PlaylistDetail> getPlaylistDetail(String id) =>
+      _datasource.getPlaylistDetail(id);
 
   @override
-  Future<Either<Failure, Playlist>> removeSongFromPlaylist(
-      RemoveSongFromPlaylistParams params) async {
-    try {
-      final result = await _datasource.removeSongFromPlaylist(params);
-      return Right(result);
-    } on DioException catch (e) {
-      return Left(_mapDioError(e));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
+  Future<void> updatePlaylist({required String id, required String name}) =>
+      _datasource.updatePlaylist(id: id, name: name);
 
-  Failure _mapDioError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == 401) return const UnauthorizedFailure();
-    if (statusCode == 404) {
-      return NotFoundFailure(
-          message: e.response?.data?['message'] as String? ?? 'Not found');
-    }
-    final message = e.response?.data?['message'] as String? ??
-        e.message ??
-        'Network error';
-    return ServerFailure(message: message, statusCode: statusCode);
-  }
+  @override
+  Future<void> deletePlaylist(String id) => _datasource.deletePlaylist(id);
+
+  @override
+  Future<void> reorderPlaylistSongs({
+    required String playlistId,
+    required List<String> songIds,
+  }) =>
+      _datasource.reorderPlaylistSongs(playlistId: playlistId, songIds: songIds);
 }

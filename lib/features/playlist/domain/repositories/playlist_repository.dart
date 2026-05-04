@@ -1,71 +1,34 @@
-import 'package:fpdart/fpdart.dart';
-import 'package:ondas_mobile/core/error/failures.dart';
-import 'package:ondas_mobile/core/network/api_response.dart';
-import 'package:ondas_mobile/features/playlist/domain/entities/playlist.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_detail.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 
 abstract class PlaylistRepository {
-  Future<Either<Failure, PageResult<Playlist>>> getMyPlaylists({
-    int page = 0,
-    int size = 20,
+  /// Returns current user's playlists. Each item includes [PlaylistSummary.containsSong]
+  /// to reflect whether [songId] is already in the playlist.
+  Future<List<PlaylistSummary>> getMyPlaylists({required String songId});
+
+  Future<void> addSongToPlaylist({
+    required String playlistId,
+    required String songId,
   });
 
-  Future<Either<Failure, Playlist>> createPlaylist(CreatePlaylistParams params);
-
-  Future<Either<Failure, Playlist>> getPlaylistDetail(String id);
-
-  Future<Either<Failure, Playlist>> updatePlaylist(UpdatePlaylistParams params);
-
-  Future<Either<Failure, void>> deletePlaylist(String id);
-
-  Future<Either<Failure, Playlist>> addSongToPlaylist(
-      AddSongToPlaylistParams params);
-
-  Future<Either<Failure, Playlist>> removeSongFromPlaylist(
-      RemoveSongFromPlaylistParams params);
-}
-
-class CreatePlaylistParams {
-  final String name;
-  final String? description;
-  final bool isPublic;
-
-  const CreatePlaylistParams({
-    required this.name,
-    this.description,
-    this.isPublic = false,
+  Future<void> removeSongFromPlaylist({
+    required String playlistId,
+    required String songId,
   });
-}
 
-class UpdatePlaylistParams {
-  final String id;
-  final String? name;
-  final String? description;
-  final bool? isPublic;
-
-  const UpdatePlaylistParams({
-    required this.id,
-    this.name,
-    this.description,
-    this.isPublic,
+  /// Creates a new playlist. If [coverImageUrl] is provided, downloads the image
+  /// and uploads it as the playlist cover.
+  Future<PlaylistSummary> createPlaylist({
+    required String name,
+    String? coverImageUrl,
   });
-}
 
-class AddSongToPlaylistParams {
-  final String playlistId;
-  final String songId;
-
-  const AddSongToPlaylistParams({
-    required this.playlistId,
-    required this.songId,
-  });
-}
-
-class RemoveSongFromPlaylistParams {
-  final String playlistId;
-  final String songId;
-
-  const RemoveSongFromPlaylistParams({
-    required this.playlistId,
-    required this.songId,
+  Future<List<PlaylistSummary>> getLibraryPlaylists();
+  Future<PlaylistDetail> getPlaylistDetail(String id);
+  Future<void> updatePlaylist({required String id, required String name});
+  Future<void> deletePlaylist(String id);
+  Future<void> reorderPlaylistSongs({
+    required String playlistId,
+    required List<String> songIds,
   });
 }

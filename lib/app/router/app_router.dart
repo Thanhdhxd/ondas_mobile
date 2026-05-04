@@ -12,15 +12,19 @@ import 'package:ondas_mobile/features/auth/presentation/screens/login_screen.dar
 import 'package:ondas_mobile/features/auth/presentation/screens/register_screen.dart';
 import 'package:ondas_mobile/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:ondas_mobile/features/home/presentation/screens/home_screen.dart';
+import 'package:ondas_mobile/features/library/presentation/bloc/playlist_detail_bloc.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/library_screen.dart';
+import 'package:ondas_mobile/features/library/presentation/screens/playlist_detail_screen.dart';
 import 'package:ondas_mobile/features/player/presentation/screens/player_screen.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/history_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
 import 'package:ondas_mobile/features/profile/presentation/screens/history_screen.dart';
 import 'package:ondas_mobile/features/profile/presentation/screens/profile_screen.dart';
 import 'package:ondas_mobile/features/search/presentation/screens/search_screen.dart';
-import 'package:ondas_mobile/features/playlist/presentation/screens/playlist_detail_screen.dart';
+import 'package:ondas_mobile/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:ondas_mobile/features/songs/presentation/screens/song_list_screen.dart';
 
 class AppRouter {
   AppRouter._();
@@ -90,12 +94,43 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: '/songs/artist/:id',
+          name: 'artistSongs',
+          builder: (context, state) => SongListScreen(
+            routeData: state.extra as SongListRouteData,
+          ),
+        ),
+        GoRoute(
+          path: '/songs/album/:id',
+          name: 'albumSongs',
+          builder: (context, state) => SongListScreen(
+            routeData: state.extra as SongListRouteData,
+          ),
+        ),
+        GoRoute(
           path: '/history',
           name: 'history',
           builder: (context, state) => BlocProvider<HistoryBloc>(
             create: (_) => sl<HistoryBloc>(),
             child: const HistoryScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/favorites',
+          name: 'favorites',
+          builder: (context, state) => const FavoritesScreen(),
+        ),
+        GoRoute(
+          path: '/library/playlist/:id',
+          name: 'playlistDetail',
+          builder: (context, state) {
+            final summary = state.extra as PlaylistSummary;
+            return BlocProvider<PlaylistDetailBloc>(
+              create: (_) => sl<PlaylistDetailBloc>()
+                ..add(PlaylistDetailStarted(summary.id)),
+              child: PlaylistDetailScreen(initialName: summary.name),
+            );
+          },
         ),
         ShellRoute(
           builder: (context, state, child) => MainShellScreen(child: child),
@@ -114,13 +149,6 @@ class AppRouter {
               path: '/library',
               name: 'library',
               builder: (context, state) => const LibraryScreen(),
-            ),
-            GoRoute(
-              path: '/playlists/:id',
-              name: 'playlistDetail',
-              builder: (context, state) => PlaylistDetailScreen(
-                playlistId: state.pathParameters['id']!,
-              ),
             ),
             GoRoute(
               path: '/profile',

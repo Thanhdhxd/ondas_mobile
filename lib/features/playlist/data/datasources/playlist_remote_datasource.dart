@@ -1,20 +1,30 @@
-import 'package:ondas_mobile/core/network/api_response.dart';
-import 'package:ondas_mobile/features/playlist/data/models/playlist_model.dart';
-import 'package:ondas_mobile/features/playlist/domain/repositories/playlist_repository.dart';
+import 'package:ondas_mobile/features/playlist/data/models/playlist_detail_model.dart';
+import 'package:ondas_mobile/features/playlist/data/models/playlist_summary_model.dart';
 
 abstract class PlaylistRemoteDatasource {
-  Future<PageResult<PlaylistModel>> getMyPlaylists({int page, int size});
+  Future<List<PlaylistSummaryModel>> getMyPlaylists({required String songId});
 
-  Future<PlaylistModel> createPlaylist(CreatePlaylistParams params);
+  Future<void> addSongToPlaylist({
+    required String playlistId,
+    required String songId,
+  });
 
-  Future<PlaylistModel> getPlaylistDetail(String id);
+  Future<void> removeSongFromPlaylist({
+    required String playlistId,
+    required String songId,
+  });
 
-  Future<PlaylistModel> updatePlaylist(UpdatePlaylistParams params);
+  Future<PlaylistSummaryModel> createPlaylist({
+    required String name,
+    String? coverImageUrl,
+  });
 
+  Future<List<PlaylistSummaryModel>> getLibraryPlaylists();
+  Future<PlaylistDetailModel> getPlaylistDetail(String id);
+  Future<void> updatePlaylist({required String id, required String name});
   Future<void> deletePlaylist(String id);
-
-  Future<PlaylistModel> addSongToPlaylist(AddSongToPlaylistParams params);
-
-  Future<PlaylistModel> removeSongFromPlaylist(
-      RemoveSongFromPlaylistParams params);
+  Future<void> reorderPlaylistSongs({
+    required String playlistId,
+    required List<String> songIds,
+  });
 }

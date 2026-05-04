@@ -1,6 +1,63 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:ondas_mobile/core/network/dio_client.dart';
+import 'package:ondas_mobile/features/songs/data/datasources/songs_remote_datasource.dart';
+import 'package:ondas_mobile/features/songs/data/datasources/songs_remote_datasource_impl.dart';
+import 'package:ondas_mobile/features/songs/data/repositories/songs_repository_impl.dart';
+import 'package:ondas_mobile/features/songs/domain/repositories/songs_repository.dart';
+import 'package:ondas_mobile/features/songs/domain/usecases/get_songs_usecase.dart';
+import 'package:ondas_mobile/features/songs/domain/usecases/get_songs_usecase_impl.dart';
+import 'package:ondas_mobile/features/songs/presentation/bloc/song_list_bloc.dart';
+import 'package:ondas_mobile/features/library/presentation/bloc/library_bloc.dart';
+import 'package:ondas_mobile/features/library/presentation/bloc/playlist_detail_bloc.dart';
+import 'package:ondas_mobile/features/search/data/datasources/search_remote_datasource.dart';
+import 'package:ondas_mobile/features/search/data/datasources/search_remote_datasource_impl.dart';
+import 'package:ondas_mobile/features/search/data/repositories/search_repository_impl.dart';
+import 'package:ondas_mobile/features/search/domain/repositories/search_repository.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/clear_search_history_usecase.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/clear_search_history_usecase_impl.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/get_search_suggestions_usecase.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/get_search_suggestions_usecase_impl.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/search_usecase.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/search_usecase_impl.dart';
+import 'package:ondas_mobile/features/search/presentation/bloc/search_bloc.dart';
+import 'package:ondas_mobile/features/favorites/data/datasources/favorites_remote_datasource.dart';
+import 'package:ondas_mobile/features/favorites/data/datasources/favorites_remote_datasource_impl.dart';
+import 'package:ondas_mobile/features/favorites/data/repositories/favorites_repository_impl.dart';
+import 'package:ondas_mobile/features/favorites/domain/repositories/favorites_repository.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/add_favorite_usecase.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/add_favorite_usecase_impl.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/remove_favorite_usecase.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/remove_favorite_usecase_impl.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/check_favorite_status_usecase.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/check_favorite_status_usecase_impl.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/get_favorites_usecase.dart';
+import 'package:ondas_mobile/features/favorites/domain/usecases/get_favorites_usecase_impl.dart';
+import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:ondas_mobile/features/favorites/presentation/bloc/favorite_toggle_bloc.dart';
+import 'package:ondas_mobile/features/playlist/data/datasources/playlist_remote_datasource.dart';
+import 'package:ondas_mobile/features/playlist/data/datasources/playlist_remote_datasource_impl.dart';
+import 'package:ondas_mobile/features/playlist/data/repositories/playlist_repository_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/repositories/playlist_repository.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/add_song_to_playlist_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/add_song_to_playlist_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_library_playlists_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_library_playlists_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_my_playlists_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_my_playlists_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_playlist_detail_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_playlist_detail_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/remove_song_from_playlist_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/remove_song_from_playlist_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/reorder_playlist_songs_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/reorder_playlist_songs_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/update_playlist_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/update_playlist_usecase_impl.dart';
+import 'package:ondas_mobile/features/playlist/presentation/bloc/save_to_playlist_bloc.dart';
 import 'package:ondas_mobile/core/network/jwt_interceptor.dart';
 import 'package:ondas_mobile/core/storage/secure_storage.dart';
 import 'package:ondas_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
@@ -72,26 +129,6 @@ import 'package:ondas_mobile/features/profile/domain/usecases/get_play_history_u
 import 'package:ondas_mobile/features/profile/domain/usecases/get_play_history_usecase_impl.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/history_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
-import 'package:ondas_mobile/features/playlist/data/datasources/playlist_remote_datasource.dart';
-import 'package:ondas_mobile/features/playlist/data/datasources/playlist_remote_datasource_impl.dart';
-import 'package:ondas_mobile/features/playlist/data/repositories/playlist_repository_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/repositories/playlist_repository.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/get_my_playlists_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/get_my_playlists_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/get_playlist_detail_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/get_playlist_detail_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/update_playlist_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/update_playlist_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/add_song_to_playlist_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/add_song_to_playlist_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/remove_song_from_playlist_usecase.dart';
-import 'package:ondas_mobile/features/playlist/domain/usecases/remove_song_from_playlist_usecase_impl.dart';
-import 'package:ondas_mobile/features/playlist/presentation/bloc/playlist_bloc.dart';
-import 'package:ondas_mobile/features/playlist/presentation/bloc/playlist_detail_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -274,8 +311,27 @@ Future<void> setupDependencies() async {
   sl.registerLazySingleton<GetMyPlaylistsUseCase>(
     () => GetMyPlaylistsUseCaseImpl(sl<PlaylistRepository>()),
   );
+  sl.registerLazySingleton<AddSongToPlaylistUseCase>(
+    () => AddSongToPlaylistUseCaseImpl(sl<PlaylistRepository>()),
+  );
+  sl.registerLazySingleton<RemoveSongFromPlaylistUseCase>(
+    () => RemoveSongFromPlaylistUseCaseImpl(sl<PlaylistRepository>()),
+  );
   sl.registerLazySingleton<CreatePlaylistUseCase>(
     () => CreatePlaylistUseCaseImpl(sl<PlaylistRepository>()),
+  );
+  sl.registerFactory<SaveToPlaylistBloc>(
+    () => SaveToPlaylistBloc(
+      getMyPlaylistsUseCase: sl<GetMyPlaylistsUseCase>(),
+      addSongToPlaylistUseCase: sl<AddSongToPlaylistUseCase>(),
+      removeSongFromPlaylistUseCase: sl<RemoveSongFromPlaylistUseCase>(),
+      createPlaylistUseCase: sl<CreatePlaylistUseCase>(),
+    ),
+  );
+
+  // ── Library ───────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<GetLibraryPlaylistsUseCase>(
+    () => GetLibraryPlaylistsUseCaseImpl(sl<PlaylistRepository>()),
   );
   sl.registerLazySingleton<GetPlaylistDetailUseCase>(
     () => GetPlaylistDetailUseCaseImpl(sl<PlaylistRepository>()),
@@ -286,15 +342,12 @@ Future<void> setupDependencies() async {
   sl.registerLazySingleton<DeletePlaylistUseCase>(
     () => DeletePlaylistUseCaseImpl(sl<PlaylistRepository>()),
   );
-  sl.registerLazySingleton<AddSongToPlaylistUseCase>(
-    () => AddSongToPlaylistUseCaseImpl(sl<PlaylistRepository>()),
+  sl.registerLazySingleton<ReorderPlaylistSongsUseCase>(
+    () => ReorderPlaylistSongsUseCaseImpl(sl<PlaylistRepository>()),
   );
-  sl.registerLazySingleton<RemoveSongFromPlaylistUseCase>(
-    () => RemoveSongFromPlaylistUseCaseImpl(sl<PlaylistRepository>()),
-  );
-  sl.registerFactory<PlaylistBloc>(
-    () => PlaylistBloc(
-      getMyPlaylistsUseCase: sl<GetMyPlaylistsUseCase>(),
+  sl.registerFactory<LibraryBloc>(
+    () => LibraryBloc(
+      getLibraryPlaylistsUseCase: sl<GetLibraryPlaylistsUseCase>(),
       createPlaylistUseCase: sl<CreatePlaylistUseCase>(),
       deletePlaylistUseCase: sl<DeletePlaylistUseCase>(),
     ),
@@ -303,6 +356,79 @@ Future<void> setupDependencies() async {
     () => PlaylistDetailBloc(
       getPlaylistDetailUseCase: sl<GetPlaylistDetailUseCase>(),
       removeSongFromPlaylistUseCase: sl<RemoveSongFromPlaylistUseCase>(),
+      reorderPlaylistSongsUseCase: sl<ReorderPlaylistSongsUseCase>(),
+      updatePlaylistUseCase: sl<UpdatePlaylistUseCase>(),
     ),
+  );
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<SearchRemoteDatasource>(
+    () => SearchRemoteDatasourceImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(sl<SearchRemoteDatasource>()),
+  );
+  sl.registerLazySingleton<SearchUseCase>(
+    () => SearchUseCaseImpl(sl<SearchRepository>()),
+  );
+  sl.registerLazySingleton<GetSearchSuggestionsUseCase>(
+    () => GetSearchSuggestionsUseCaseImpl(sl<SearchRepository>()),
+  );
+  sl.registerLazySingleton<ClearSearchHistoryUseCase>(
+    () => ClearSearchHistoryUseCaseImpl(sl<SearchRepository>()),
+  );
+  sl.registerFactory<SearchBloc>(
+    () => SearchBloc(
+      searchUseCase: sl<SearchUseCase>(),
+      getSuggestionsUseCase: sl<GetSearchSuggestionsUseCase>(),
+      clearHistoryUseCase: sl<ClearSearchHistoryUseCase>(),
+    ),
+  );
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<FavoritesRemoteDatasource>(
+    () => FavoritesRemoteDatasourceImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<FavoritesRepository>(
+    () => FavoritesRepositoryImpl(sl<FavoritesRemoteDatasource>()),
+  );
+  sl.registerLazySingleton<AddFavoriteUseCase>(
+    () => AddFavoriteUseCaseImpl(sl<FavoritesRepository>()),
+  );
+  sl.registerLazySingleton<RemoveFavoriteUseCase>(
+    () => RemoveFavoriteUseCaseImpl(sl<FavoritesRepository>()),
+  );
+  sl.registerLazySingleton<CheckFavoriteStatusUseCase>(
+    () => CheckFavoriteStatusUseCaseImpl(sl<FavoritesRepository>()),
+  );
+  sl.registerLazySingleton<GetFavoritesUseCase>(
+    () => GetFavoritesUseCaseImpl(sl<FavoritesRepository>()),
+  );
+  sl.registerFactory<FavoritesBloc>(
+    () => FavoritesBloc(
+      getFavoritesUseCase: sl<GetFavoritesUseCase>(),
+      removeFavoriteUseCase: sl<RemoveFavoriteUseCase>(),
+    ),
+  );
+  sl.registerFactory<FavoriteToggleBloc>(
+    () => FavoriteToggleBloc(
+      checkFavoriteStatusUseCase: sl<CheckFavoriteStatusUseCase>(),
+      addFavoriteUseCase: sl<AddFavoriteUseCase>(),
+      removeFavoriteUseCase: sl<RemoveFavoriteUseCase>(),
+    ),
+  );
+
+  // ── Songs ─────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<SongsRemoteDatasource>(
+    () => SongsRemoteDatasourceImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<SongsRepository>(
+    () => SongsRepositoryImpl(sl<SongsRemoteDatasource>()),
+  );
+  sl.registerLazySingleton<GetSongsUseCase>(
+    () => GetSongsUseCaseImpl(sl<SongsRepository>()),
+  );
+  sl.registerFactory<SongListBloc>(
+    () => SongListBloc(getSongsUseCase: sl<GetSongsUseCase>()),
   );
 }

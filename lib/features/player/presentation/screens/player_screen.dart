@@ -11,11 +11,41 @@ import 'package:ondas_mobile/features/player/presentation/bloc/player_state.dart
 import 'package:ondas_mobile/features/player/presentation/widgets/player_artwork_widget.dart';
 import 'package:ondas_mobile/features/player/presentation/widgets/player_controls_widget.dart';
 import 'package:ondas_mobile/features/player/presentation/widgets/player_info_widget.dart';
+import 'package:ondas_mobile/features/player/presentation/widgets/player_lyrics_tab.dart';
+import 'package:ondas_mobile/features/player/presentation/widgets/player_queue_tab.dart';
 import 'package:ondas_mobile/features/player/presentation/widgets/player_seekbar_widget.dart';
 import 'package:ondas_mobile/features/player/presentation/widgets/player_volume_widget.dart';
+import 'package:ondas_mobile/features/playlist/presentation/widgets/save_to_playlist_bottom_sheet.dart';
+import 'package:ondas_mobile/features/favorites/presentation/widgets/favorite_button_widget.dart';
 
-class PlayerScreen extends StatelessWidget {
+class PlayerScreen extends StatefulWidget {
   const PlayerScreen({super.key});
+
+  @override
+  State<PlayerScreen> createState() => _PlayerScreenState();
+}
+
+class _PlayerScreenState extends State<PlayerScreen> {
+  static const _tabs = ['Playing', 'Lyrics', 'Queue'];
+
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int page) {
+    setState(() => _currentPage = page);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +60,27 @@ class PlayerScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _PlayerAppBar(),
+                    _TabIndicator(
+                      tabs: _tabs,
+                      currentIndex: _currentPage,
+                      onTap: (i) => _pageController.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      ),
+                    ),
                     Expanded(
                       child: state.status == PlayerStatus.idle
                           ? const _IdleView()
-                          : _PlayerContent(state: state),
+                          : PageView(
+                              controller: _pageController,
+                              onPageChanged: _onPageChanged,
+                              children: [
+                                _PlayerContent(state: state),
+                                const PlayerLyricsTab(),
+                                const PlayerQueueTab(),
+                              ],
+                            ),
                     ),
                   ],
                 ),
@@ -42,6 +89,63 @@ class PlayerScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// ── Tab indicator ─────────────────────────────────────────────────────────────
+
+class _TabIndicator extends StatelessWidget {
+  final List<String> tabs;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _TabIndicator({
+    required this.tabs,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(tabs.length, (i) {
+          final isSelected = i == currentIndex;
+          return GestureDetector(
+            onTap: () => onTap(i),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.base,
+                vertical: AppSpacing.xs,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppColors.spotifyGreen.withValues(alpha: 0.15)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                tabs[i],
+                style: TextStyle(
+                  color: isSelected ? AppColors.spotifyGreen : AppColors.silver,
+                  fontWeight:
+                      isSelected ? FontWeight.w700 : FontWeight.w400,
+                  fontSize: 13,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
@@ -193,15 +297,24 @@ class _InfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final song = state.currentSong;
     return Row(
       children: [
         Expanded(
           child: PlayerInfoWidget(
             key: const Key('playerScreen_info'),
-            songTitle: state.currentSong?.title ?? '',
-            artistDisplay: state.currentSong?.artistDisplay ?? '',
+            songTitle: song?.title ?? '',
+            artistDisplay: song?.artistDisplay ?? '',
           ),
         ),
+        if (song != null)
+          FavoriteButtonWidget(
+            key: ValueKey('playerScreen_favorite_${song.id}'),
+            songId: song.id,
+            iconSize: 28,
+            activeColor: Colors.redAccent,
+            inactiveColor: AppColors.silver,
+          ),
       ],
     );
   }
@@ -232,6 +345,7 @@ class _ControlsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<PlayerBloc>();
+    final song = state.currentSong;
     return PlayerControlsWidget(
       key: const Key('playerScreen_controls'),
       status: state.status,
@@ -243,6 +357,13 @@ class _ControlsSection extends StatelessWidget {
       onSkipNext: () => bloc.add(const SkipNextRequested()),
       onSkipPrevious: () => bloc.add(const SkipPreviousRequested()),
       onRepeatModeToggle: () => bloc.add(const RepeatModeToggled()),
+      onSave: song == null
+          ? null
+          : () => SaveToPlaylistBottomSheet.show(
+                context,
+                songId: song.id,
+                coverUrl: song.coverUrl,
+              ),
     );
   }
 }
