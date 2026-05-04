@@ -73,7 +73,7 @@ class _AuthTextFieldWidgetState extends State<AuthTextFieldWidget> {
           borderSide: const BorderSide(color: AppColors.negativeRed),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppColors.negativeRed.opacity > 0 ? AppRadius.comfortable : AppRadius.comfortable),
+          borderRadius: BorderRadius.circular(AppColors.negativeRed.a > 0 ? AppRadius.comfortable : AppRadius.comfortable),
           borderSide: const BorderSide(color: AppColors.negativeRed, width: 1.5),
         ),
         suffixIcon: widget.obscure

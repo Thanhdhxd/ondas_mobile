@@ -1,16 +1,5 @@
-import 'package:fpdart/fpdart.dart';
-import 'package:ondas_mobile/core/error/failures.dart';
-import 'package:ondas_mobile/core/network/api_response.dart';
-import 'package:ondas_mobile/features/playlist/domain/entities/playlist.dart';
-
-class GetMyPlaylistsParams {
-  final int page;
-  final int size;
-
-  const GetMyPlaylistsParams({this.page = 0, this.size = 20});
-}
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 
 abstract class GetMyPlaylistsUseCase {
-  Future<Either<Failure, PageResult<Playlist>>> call(
-      GetMyPlaylistsParams params);
+  Future<List<PlaylistSummary>> call({required String songId});
 }

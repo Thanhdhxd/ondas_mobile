@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
@@ -40,7 +39,7 @@ class ProfileHeaderWidget extends StatelessWidget {
                             if (progress == null) return child;
                             return const CircularProgressIndicator(strokeWidth: 2);
                           },
-                          errorBuilder: (_, error, __) {
+                          errorBuilder: (_, error, _) {
                             debugPrint('[Avatar] Failed to load: ${userProfile.avatarUrl} — $error');
                             return const Icon(Icons.person, size: 48, color: AppColors.silver);
                           },

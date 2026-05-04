@@ -1,7 +1,5 @@
-import 'package:fpdart/fpdart.dart';
-import 'package:ondas_mobile/core/error/failures.dart';
-import 'package:ondas_mobile/features/playlist/domain/entities/playlist.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_detail.dart';
 
 abstract class GetPlaylistDetailUseCase {
-  Future<Either<Failure, Playlist>> call(String id);
+  Future<PlaylistDetail> call(String playlistId);
 }
