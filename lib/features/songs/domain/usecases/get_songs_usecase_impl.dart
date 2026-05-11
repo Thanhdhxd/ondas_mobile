@@ -15,6 +15,7 @@ class GetSongsUseCaseImpl implements GetSongsUseCase {
     return _repository.getSongs(
       artistId: params.artistId,
       albumId: params.albumId,
+      genreId: params.genreId,
       page: params.page,
       size: params.size,
     );

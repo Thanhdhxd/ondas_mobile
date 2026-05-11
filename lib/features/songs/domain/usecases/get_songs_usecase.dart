@@ -10,14 +10,16 @@ abstract class GetSongsUseCase {
 class GetSongsParams {
   final String? artistId;
   final String? albumId;
+  final int? genreId;
   final int page;
   final int size;
 
   const GetSongsParams({
     this.artistId,
     this.albumId,
+    this.genreId,
     this.page = 0,
     this.size = 20,
-  }) : assert(artistId != null || albumId != null,
-            'Either artistId or albumId must be provided');
+  }) : assert(artistId != null || albumId != null || genreId != null,
+            'At least one filter (artistId, albumId, or genreId) must be provided');
 }

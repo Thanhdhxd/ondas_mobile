@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/di/injection.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
@@ -16,6 +17,7 @@ import 'package:ondas_mobile/features/home/presentation/widgets/trending_song_ca
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_event.dart';
+import 'package:ondas_mobile/features/songs/presentation/screens/song_list_screen.dart';
 
 Song _summaryToSong(SongSummary s) => Song(
       id: s.id,
@@ -236,6 +238,14 @@ class _FeaturedArtistsList extends StatelessWidget {
         itemBuilder: (context, index) => FeaturedArtistCardWidget(
           key: Key('homeScreen_featuredArtist_$index'),
           artist: artists[index],
+          onTap: () => context.push(
+            '/songs/artist/${artists[index].id}',
+            extra: SongListRouteData(
+              artistId: artists[index].id,
+              title: artists[index].name,
+              coverUrl: artists[index].avatarUrl,
+            ),
+          ),
         ),
       ),
     );
@@ -260,6 +270,14 @@ class _NewReleasesList extends StatelessWidget {
         itemBuilder: (context, index) => NewReleaseCardWidget(
           key: Key('homeScreen_newRelease_$index'),
           album: albums[index],
+          onTap: () => context.push(
+            '/songs/album/${albums[index].id}',
+            extra: SongListRouteData(
+              albumId: albums[index].id,
+              title: albums[index].title,
+              coverUrl: albums[index].coverUrl,
+            ),
+          ),
         ),
       ),
     );

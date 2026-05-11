@@ -84,10 +84,17 @@ import 'package:ondas_mobile/features/home/domain/repositories/home_repository.d
 import 'package:ondas_mobile/features/home/domain/usecases/get_home_data_usecase.dart';
 import 'package:ondas_mobile/features/home/domain/usecases/get_home_data_usecase_impl.dart';
 import 'package:ondas_mobile/features/home/presentation/bloc/home_bloc.dart';
+import 'package:ondas_mobile/features/lyrics/data/datasources/lyrics_remote_datasource.dart';
+import 'package:ondas_mobile/features/lyrics/data/datasources/lyrics_remote_datasource_impl.dart';
+import 'package:ondas_mobile/features/lyrics/data/repositories/lyrics_repository_impl.dart';
+import 'package:ondas_mobile/features/lyrics/domain/repositories/lyrics_repository.dart';
+import 'package:ondas_mobile/features/lyrics/domain/usecases/get_lyrics_usecase.dart';
+import 'package:ondas_mobile/features/lyrics/domain/usecases/get_lyrics_usecase_impl.dart';
+import 'package:ondas_mobile/features/lyrics/presentation/bloc/lyrics_bloc.dart';
 import 'package:ondas_mobile/features/player/data/datasources/play_history_remote_datasource.dart';
 import 'package:ondas_mobile/features/player/data/datasources/play_history_remote_datasource_impl.dart';
 import 'package:ondas_mobile/features/player/data/repositories/play_history_repository_impl.dart';
-import 'package:ondas_mobile/features/player/data/services/audio_player_service_impl.dart';
+import 'package:ondas_mobile/features/player/data/services/audio_service_player_service_impl.dart';
 import 'package:ondas_mobile/features/player/domain/repositories/play_history_repository.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/record_play_history_usecase.dart';
 import 'package:ondas_mobile/features/player/domain/usecases/record_play_history_usecase_impl.dart';
@@ -147,9 +154,7 @@ Future<void> setupDependencies() async {
   sl.registerLazySingleton<JwtInterceptor>(
     () => JwtInterceptor(sl<SecureStorage>()),
   );
-  sl.registerLazySingleton<DioClient>(
-    () => DioClient(sl<JwtInterceptor>()),
-  );
+  sl.registerLazySingleton<DioClient>(() => DioClient(sl<JwtInterceptor>()));
 
   // ── Repositories ─────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthRemoteDatasource>(
@@ -181,7 +186,8 @@ Future<void> setupDependencies() async {
     ),
   );
   sl.registerFactory<ForgotPasswordBloc>(
-    () => ForgotPasswordBloc(forgotPasswordUseCase: sl<ForgotPasswordUseCase>()),
+    () =>
+        ForgotPasswordBloc(forgotPasswordUseCase: sl<ForgotPasswordUseCase>()),
   );
   sl.registerFactory<ResetPasswordBloc>(
     () => ResetPasswordBloc(resetPasswordUseCase: sl<ResetPasswordUseCase>()),
@@ -250,9 +256,8 @@ Future<void> setupDependencies() async {
   );
 
   // ── Player ────────────────────────────────────────────────────────────────
-  sl.registerLazySingleton<AudioPlayerService>(
-    () => AudioPlayerServiceImpl(),
-  );
+  final audioPlayerService = await initAudioPlayerService();
+  sl.registerLazySingleton<AudioPlayerService>(() => audioPlayerService);
   sl.registerLazySingleton<PlaySongUseCase>(
     () => PlaySongUseCaseImpl(sl<AudioPlayerService>()),
   );
@@ -299,6 +304,20 @@ Future<void> setupDependencies() async {
       audioPlayerService: sl<AudioPlayerService>(),
       recordPlayHistoryUseCase: sl<RecordPlayHistoryUseCase>(),
     ),
+  );
+
+  // ── Lyrics ───────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<LyricsRemoteDatasource>(
+    () => LyricsRemoteDatasourceImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<LyricsRepository>(
+    () => LyricsRepositoryImpl(sl<LyricsRemoteDatasource>()),
+  );
+  sl.registerLazySingleton<GetLyricsUseCase>(
+    () => GetLyricsUseCaseImpl(sl<LyricsRepository>()),
+  );
+  sl.registerFactory<LyricsBloc>(
+    () => LyricsBloc(getLyricsUseCase: sl<GetLyricsUseCase>()),
   );
 
   // ── Playlist ──────────────────────────────────────────────────────────────

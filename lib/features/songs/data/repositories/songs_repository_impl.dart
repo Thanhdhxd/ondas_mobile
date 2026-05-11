@@ -15,6 +15,7 @@ class SongsRepositoryImpl implements SongsRepository {
   Future<Either<Failure, PageResult<SongSummary>>> getSongs({
     String? artistId,
     String? albumId,
+    int? genreId,
     int page = 0,
     int size = 20,
   }) async {
@@ -22,6 +23,7 @@ class SongsRepositoryImpl implements SongsRepository {
       final result = await _datasource.getSongs(
         artistId: artistId,
         albumId: albumId,
+        genreId: genreId,
         page: page,
         size: size,
       );

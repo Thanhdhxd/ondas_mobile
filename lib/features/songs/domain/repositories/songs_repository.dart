@@ -7,6 +7,7 @@ abstract class SongsRepository {
   Future<Either<Failure, PageResult<SongSummary>>> getSongs({
     String? artistId,
     String? albumId,
+    int? genreId,
     int page = 0,
     int size = 20,
   });

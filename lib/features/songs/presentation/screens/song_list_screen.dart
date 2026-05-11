@@ -16,12 +16,14 @@ import 'package:ondas_mobile/features/songs/presentation/bloc/song_list_state.da
 class SongListRouteData {
   final String? artistId;
   final String? albumId;
+  final int? genreId;
   final String title;
   final String? coverUrl;
 
   const SongListRouteData({
     this.artistId,
     this.albumId,
+    this.genreId,
     required this.title,
     this.coverUrl,
   });
@@ -39,6 +41,7 @@ class SongListScreen extends StatelessWidget {
         ..add(SongListStarted(
           artistId: routeData.artistId,
           albumId: routeData.albumId,
+          genreId: routeData.genreId,
         )),
       child: _SongListView(routeData: routeData),
     );

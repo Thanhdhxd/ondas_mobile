@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/constants/api_constants.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_radius.dart';
@@ -11,6 +12,7 @@ import 'package:ondas_mobile/features/player/presentation/bloc/player_event.dart
 import 'package:ondas_mobile/features/search/domain/entities/search_suggestion.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_bloc.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_event.dart';
+import 'package:ondas_mobile/features/songs/presentation/screens/song_list_screen.dart';
 
 class SearchSuggestionView extends StatelessWidget {
   final SearchSuggestion suggestion;
@@ -76,7 +78,7 @@ class _RecentSearchesSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Tìm kiếm gần đây',
+                  'Recent searches',
                   style: AppTypography.featureHeading
                       .copyWith(color: AppColors.white),
                 ),
@@ -91,7 +93,7 @@ class _RecentSearchesSection extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'Xóa tất cả',
+                  'Clear all',
                   style: AppTypography.caption
                       .copyWith(color: AppColors.spotifyGreen),
                 ),
@@ -231,7 +233,7 @@ class _TrendingSongsSection extends StatelessWidget {
             AppSpacing.xs,
           ),
           child: Text(
-            'Bài hát nổi bật',
+            'Trending songs',
             style:
                 AppTypography.featureHeading.copyWith(color: AppColors.white),
           ),
@@ -341,7 +343,7 @@ class _GenresSection extends StatelessWidget {
             AppSpacing.md,
           ),
           child: Text(
-            'Khám phá theo thể loại',
+            'Explore by genre',
             style:
                 AppTypography.featureHeading.copyWith(color: AppColors.white),
           ),
@@ -363,7 +365,14 @@ class _GenresSection extends StatelessWidget {
               return _GenreCard(
                 key: Key('searchScreen_genreCard_${genre.id}'),
                 genre: genre,
-                onTap: () => onSearchTapped(genre.name),
+                onTap: () => context.push(
+                  '/songs/genre/${genre.id}',
+                  extra: SongListRouteData(
+                    genreId: genre.id,
+                    title: genre.name,
+                    coverUrl: genre.coverUrl,
+                  ),
+                ),
               );
             },
           ),
