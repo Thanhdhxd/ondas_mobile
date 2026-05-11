@@ -10,6 +10,7 @@ class SongListBloc extends Bloc<SongListEvent, SongListState> {
 
   String? _artistId;
   String? _albumId;
+  int? _genreId;
 
   SongListBloc({required GetSongsUseCase getSongsUseCase})
       : _getSongsUseCase = getSongsUseCase,
@@ -24,11 +25,13 @@ class SongListBloc extends Bloc<SongListEvent, SongListState> {
   ) async {
     _artistId = event.artistId;
     _albumId = event.albumId;
+    _genreId = event.genreId;
 
     emit(const SongListLoading());
     final result = await _getSongsUseCase(GetSongsParams(
       artistId: _artistId,
       albumId: _albumId,
+      genreId: _genreId,
       page: 0,
       size: _pageSize,
     ));
@@ -61,6 +64,7 @@ class SongListBloc extends Bloc<SongListEvent, SongListState> {
     final result = await _getSongsUseCase(GetSongsParams(
       artistId: _artistId,
       albumId: _albumId,
+      genreId: _genreId,
       page: nextPage,
       size: _pageSize,
     ));

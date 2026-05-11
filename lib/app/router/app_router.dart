@@ -108,6 +108,13 @@ class AppRouter {
           ),
         ),
         GoRoute(
+          path: '/songs/genre/:id',
+          name: 'genreSongs',
+          builder: (context, state) => SongListScreen(
+            routeData: state.extra as SongListRouteData,
+          ),
+        ),
+        GoRoute(
           path: '/history',
           name: 'history',
           builder: (context, state) => BlocProvider<HistoryBloc>(

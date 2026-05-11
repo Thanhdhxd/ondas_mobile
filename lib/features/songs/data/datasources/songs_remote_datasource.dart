@@ -5,6 +5,7 @@ abstract class SongsRemoteDatasource {
   Future<PageResult<SongSummaryModel>> getSongs({
     String? artistId,
     String? albumId,
+    int? genreId,
     int page = 0,
     int size = 20,
   });

@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ondas_mobile/core/di/injection.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
+import 'package:ondas_mobile/features/lyrics/presentation/bloc/lyrics_bloc.dart';
 import 'package:ondas_mobile/features/player/domain/entities/player_status.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_event.dart';
@@ -77,7 +79,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               onPageChanged: _onPageChanged,
                               children: [
                                 _PlayerContent(state: state),
-                                const PlayerLyricsTab(),
+                                BlocProvider<LyricsBloc>(
+                                  create: (_) => sl<LyricsBloc>(),
+                                  child: const PlayerLyricsTab(),
+                                ),
                                 const PlayerQueueTab(),
                               ],
                             ),

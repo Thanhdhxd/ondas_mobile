@@ -14,4 +14,10 @@ class AppConstants {
 
   // Token
   static const String bearerPrefix = 'Bearer ';
+
+  // Player notification channel
+  static const String playerNotificationChannelId = 'ondas_mobile.player';
+  static const String playerNotificationChannelName = 'Ondas Playback';
+  static const String playerNotificationChannelDescription =
+      'Playback controls for Ondas music';
 }

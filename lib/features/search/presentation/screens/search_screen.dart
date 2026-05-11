@@ -143,7 +143,7 @@ class _SearchBar extends StatelessWidget {
         style: AppTypography.body.copyWith(color: AppColors.white),
         cursorColor: AppColors.spotifyGreen,
         decoration: InputDecoration(
-          hintText: 'Tìm bài hát, nghệ sĩ, album...',
+          hintText: 'Search songs, artists, albums...',
           hintStyle: AppTypography.body.copyWith(color: AppColors.silver),
           prefixIcon: const Icon(Icons.search, color: AppColors.silver),
           suffixIcon: ValueListenableBuilder<TextEditingValue>(
@@ -273,7 +273,7 @@ class _ErrorView extends StatelessWidget {
             key: const Key('searchScreen_retryButton'),
             onPressed: onRetry,
             child: const Text(
-              'Thử lại',
+              'Retry',
               style: TextStyle(color: AppColors.spotifyGreen),
             ),
           ),
@@ -319,7 +319,7 @@ class _ResultsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (songs.isNotEmpty) ...[
-            SearchSectionHeaderWidget(title: 'Bài hát', total: totalSongs),
+            SearchSectionHeaderWidget(title: 'Songs', total: totalSongs),
             _SectionList(
               children: songs.map(
                 (song) => SearchSongTileWidget(
@@ -339,7 +339,7 @@ class _ResultsView extends StatelessWidget {
             ),
           ],
           if (artists.isNotEmpty) ...[
-            SearchSectionHeaderWidget(title: 'Nghệ sĩ', total: totalArtists),
+            SearchSectionHeaderWidget(title: 'Artists', total: totalArtists),
             _SectionList(
               children: artists.map(
                 (artist) => SearchArtistTileWidget(
@@ -358,7 +358,7 @@ class _ResultsView extends StatelessWidget {
             ),
           ],
           if (albums.isNotEmpty) ...[
-            SearchSectionHeaderWidget(title: 'Album', total: totalAlbums),
+            SearchSectionHeaderWidget(title: 'Albums', total: totalAlbums),
             _SectionList(
               children: albums.map(
                 (album) => SearchAlbumTileWidget(
@@ -440,12 +440,12 @@ class _NoResultsView extends StatelessWidget {
           const Icon(Icons.music_off, color: AppColors.silver, size: 64),
           const SizedBox(height: AppSpacing.base),
           Text(
-            'Không tìm thấy kết quả',
+            'No results found',
             style: AppTypography.bodyBold.copyWith(color: AppColors.white),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Thử từ khóa khác',
+            'Try a different keyword',
             style: AppTypography.caption.copyWith(color: AppColors.silver),
           ),
         ],

@@ -19,6 +19,7 @@ class ApiConstants {
   // Songs
   static const String songs = '/api/songs';
   static String songById(String id) => '/api/songs/$id';
+  static String songLyrics(String songId) => '/api/songs/$songId/lyrics';
 
   // Albums
   static const String albums = '/api/albums';
@@ -60,7 +61,7 @@ class ApiConstants {
 
   /// Host của máy tính dev — dùng để thay thế "localhost" trong URL ảnh
   /// trả về từ backend (MinIO/S3), vì device Android không resolve được "localhost".
-  static const String devHost = '192.168.123.8';
+  static const String devHost = '192.168.0.201';
 
   /// Chuyển relative path từ API thành absolute URL.
   /// Nếu URL chứa "localhost", thay bằng [devHost] để device có thể truy cập.

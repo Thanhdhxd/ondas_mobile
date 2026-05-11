@@ -13,14 +13,16 @@ class SongsRemoteDatasourceImpl implements SongsRemoteDatasource {
   Future<PageResult<SongSummaryModel>> getSongs({
     String? artistId,
     String? albumId,
+    int? genreId,
     int page = 0,
     int size = 20,
   }) async {
     final queryParameters = <String, dynamic>{
       'page': page,
       'size': size,
-      'artistId': ?artistId,
-      'albumId': ?albumId,
+      if (artistId != null) 'artistId': artistId,
+      if (albumId != null) 'albumId': albumId,
+      if (genreId != null) 'genreId': genreId,
     };
 
     final response = await _dioClient.get<Map<String, dynamic>>(

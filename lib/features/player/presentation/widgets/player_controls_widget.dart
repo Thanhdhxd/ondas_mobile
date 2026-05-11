@@ -183,7 +183,7 @@ class _SaveButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Icon(
-        // Thay thành icon add to list
+        // Change to add to list icon
         Icons.playlist_add_rounded,
         color: onTap != null ? AppColors.white : AppColors.silver,
         size: 24,
