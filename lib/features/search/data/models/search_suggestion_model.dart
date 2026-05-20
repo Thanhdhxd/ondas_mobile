@@ -1,6 +1,7 @@
 import 'package:ondas_mobile/core/constants/api_constants.dart';
 import 'package:ondas_mobile/features/home/data/models/song_summary_model.dart';
 import 'package:ondas_mobile/features/search/domain/entities/search_suggestion.dart';
+import 'package:ondas_mobile/features/tags/data/models/tag_model.dart';
 
 class GenreModel extends Genre {
   const GenreModel({
@@ -28,6 +29,7 @@ class SearchSuggestionModel extends SearchSuggestion {
     required super.trendingSearches,
     required super.trendingSongs,
     required super.genres,
+    required super.tags,
   });
 
   factory SearchSuggestionModel.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,10 @@ class SearchSuggestionModel extends SearchSuggestion {
           [],
       genres: (json['genres'] as List<dynamic>?)
               ?.map((e) => GenreModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      tags: (json['tags'] as List<dynamic>?)
+              ?.map((e) => TagModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

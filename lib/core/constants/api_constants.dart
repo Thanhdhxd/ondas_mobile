@@ -34,6 +34,10 @@ class ApiConstants {
   static const String genresSearch = '/api/genres/search';
   static String genreById(int id) => '/api/genres/$id';
 
+  // Tags
+  static const String tags = '/api/tags';
+  static const String tagsSearch = '/api/tags/search';
+
   // Home
   static const String home = '/api/home';
 
@@ -54,6 +58,10 @@ class ApiConstants {
       '/api/playlists/$id/songs/$songId';
   static String playlistSongsReorder(String id) => '/api/playlists/$id/songs/reorder';
 
+  // System playlists (read-only for users)
+  static const String systemPlaylists = '/api/system-playlists';
+  static String systemPlaylistById(String id) => '/api/system-playlists/$id';
+
   // Favorites
   static const String favorites = '/api/favorites';
   static String favoriteSong(String songId) => '/api/favorites/$songId';
@@ -61,7 +69,7 @@ class ApiConstants {
 
   /// Host của máy tính dev — dùng để thay thế "localhost" trong URL ảnh
   /// trả về từ backend (MinIO/S3), vì device Android không resolve được "localhost".
-  static const String devHost = '192.168.0.201';
+  static const String devHost = '192.168.1.107';
 
   /// Chuyển relative path từ API thành absolute URL.
   /// Nếu URL chứa "localhost", thay bằng [devHost] để device có thể truy cập.

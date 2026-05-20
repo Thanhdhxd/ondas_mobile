@@ -4,20 +4,24 @@ import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.
 import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase.dart';
 import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase.dart';
 import 'package:ondas_mobile/features/playlist/domain/usecases/get_library_playlists_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_system_playlists_usecase.dart';
 
 part 'library_event.dart';
 part 'library_state.dart';
 
 class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   final GetLibraryPlaylistsUseCase _getPlaylists;
+  final GetSystemPlaylistsUseCase _getSystemPlaylists;
   final CreatePlaylistUseCase _createPlaylist;
   final DeletePlaylistUseCase _deletePlaylist;
 
   LibraryBloc({
     required GetLibraryPlaylistsUseCase getLibraryPlaylistsUseCase,
+    required GetSystemPlaylistsUseCase getSystemPlaylistsUseCase,
     required CreatePlaylistUseCase createPlaylistUseCase,
     required DeletePlaylistUseCase deletePlaylistUseCase,
   })  : _getPlaylists = getLibraryPlaylistsUseCase,
+        _getSystemPlaylists = getSystemPlaylistsUseCase,
         _createPlaylist = createPlaylistUseCase,
         _deletePlaylist = deletePlaylistUseCase,
         super(const LibraryInitial()) {
@@ -33,8 +37,14 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
   ) async {
     emit(const LibraryLoading());
     try {
-      final playlists = await _getPlaylists();
-      emit(LibraryLoaded(playlists: playlists));
+      final results = await Future.wait([
+        _getPlaylists(),
+        _getSystemPlaylists(),
+      ]);
+      emit(LibraryLoaded(
+        playlists: results[0],
+        systemPlaylists: results[1],
+      ));
     } catch (e) {
       emit(LibraryError(e.toString()));
     }
@@ -53,7 +63,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
         CreatePlaylistParams(name: event.name),
       );
       final updated = [newPlaylist, ...current.playlists];
-      emit(LibraryLoaded(playlists: updated));
+      emit(current.copyWith(playlists: updated, isCreating: false));
     } catch (e) {
       emit(current.copyWith(isCreating: false));
     }

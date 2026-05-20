@@ -6,9 +6,13 @@ import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.
 import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase.dart';
 import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase.dart';
 import 'package:ondas_mobile/features/playlist/domain/usecases/get_library_playlists_usecase.dart';
+import 'package:ondas_mobile/features/playlist/domain/usecases/get_system_playlists_usecase.dart';
 
 class MockGetLibraryPlaylistsUseCase extends Mock
     implements GetLibraryPlaylistsUseCase {}
+
+class MockGetSystemPlaylistsUseCase extends Mock
+    implements GetSystemPlaylistsUseCase {}
 
 class MockCreatePlaylistUseCase extends Mock implements CreatePlaylistUseCase {}
 
@@ -40,6 +44,7 @@ const tNewPlaylist = PlaylistSummary(
 void main() {
   late LibraryBloc bloc;
   late MockGetLibraryPlaylistsUseCase mockGetPlaylists;
+  late MockGetSystemPlaylistsUseCase mockGetSystemPlaylists;
   late MockCreatePlaylistUseCase mockCreatePlaylist;
   late MockDeletePlaylistUseCase mockDeletePlaylist;
 
@@ -49,10 +54,13 @@ void main() {
 
   setUp(() {
     mockGetPlaylists = MockGetLibraryPlaylistsUseCase();
+    mockGetSystemPlaylists = MockGetSystemPlaylistsUseCase();
     mockCreatePlaylist = MockCreatePlaylistUseCase();
     mockDeletePlaylist = MockDeletePlaylistUseCase();
+    when(() => mockGetSystemPlaylists()).thenAnswer((_) async => []);
     bloc = LibraryBloc(
       getLibraryPlaylistsUseCase: mockGetPlaylists,
+      getSystemPlaylistsUseCase: mockGetSystemPlaylists,
       createPlaylistUseCase: mockCreatePlaylist,
       deletePlaylistUseCase: mockDeletePlaylist,
     );

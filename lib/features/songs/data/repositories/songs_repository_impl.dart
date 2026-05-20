@@ -16,6 +16,7 @@ class SongsRepositoryImpl implements SongsRepository {
     String? artistId,
     String? albumId,
     int? genreId,
+    List<int>? tagIds,
     int page = 0,
     int size = 20,
   }) async {
@@ -24,6 +25,7 @@ class SongsRepositoryImpl implements SongsRepository {
         artistId: artistId,
         albumId: albumId,
         genreId: genreId,
+        tagIds: tagIds,
         page: page,
         size: size,
       );

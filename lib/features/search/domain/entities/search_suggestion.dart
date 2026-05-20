@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:ondas_mobile/features/home/domain/entities/song_summary.dart';
+import 'package:ondas_mobile/features/tags/domain/entities/tag.dart';
 
 class Genre extends Equatable {
   final int id;
@@ -25,12 +26,14 @@ class SearchSuggestion extends Equatable {
   final List<String> trendingSearches;
   final List<SongSummary> trendingSongs;
   final List<Genre> genres;
+  final List<Tag> tags;
 
   const SearchSuggestion({
     required this.recentSearches,
     required this.trendingSearches,
     required this.trendingSongs,
     required this.genres,
+    required this.tags,
   });
 
   @override
@@ -39,5 +42,6 @@ class SearchSuggestion extends Equatable {
         trendingSearches,
         trendingSongs,
         genres,
+      tags,
       ];
 }

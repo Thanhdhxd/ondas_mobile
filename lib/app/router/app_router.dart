@@ -13,8 +13,10 @@ import 'package:ondas_mobile/features/auth/presentation/screens/register_screen.
 import 'package:ondas_mobile/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:ondas_mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:ondas_mobile/features/library/presentation/bloc/playlist_detail_bloc.dart';
+import 'package:ondas_mobile/features/library/presentation/bloc/system_playlist_detail_bloc.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/library_screen.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/playlist_detail_screen.dart';
+import 'package:ondas_mobile/features/library/presentation/screens/system_playlist_detail_screen.dart';
 import 'package:ondas_mobile/features/player/presentation/screens/player_screen.dart';
 import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/history_bloc.dart';
@@ -136,6 +138,22 @@ class AppRouter {
               create: (_) => sl<PlaylistDetailBloc>()
                 ..add(PlaylistDetailStarted(summary.id)),
               child: PlaylistDetailScreen(initialName: summary.name),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/library/system-playlist/:id',
+          name: 'systemPlaylistDetail',
+          builder: (context, state) {
+            final summary = state.extra as PlaylistSummary;
+            final id = state.pathParameters['id'] ?? summary.id;
+            return BlocProvider<SystemPlaylistDetailBloc>(
+              create: (_) => sl<SystemPlaylistDetailBloc>()
+                ..add(SystemPlaylistDetailStarted(id)),
+              child: SystemPlaylistDetailScreen(
+                playlistId: id,
+                initialName: summary.name,
+              ),
             );
           },
         ),

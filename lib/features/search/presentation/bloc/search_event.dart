@@ -33,6 +33,19 @@ class SearchCleared extends SearchEvent {
   const SearchCleared();
 }
 
+class TagSearchRequested extends SearchEvent {
+  final List<int> tagIds;
+  final String queryLabel;
+
+  const TagSearchRequested({
+    required this.tagIds,
+    required this.queryLabel,
+  });
+
+  @override
+  List<Object?> get props => [tagIds, queryLabel];
+}
+
 class SuggestionsRequested extends SearchEvent {
   const SuggestionsRequested();
 }

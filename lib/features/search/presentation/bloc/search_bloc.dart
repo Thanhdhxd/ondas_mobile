@@ -7,11 +7,16 @@ import 'package:ondas_mobile/features/search/domain/usecases/get_search_suggesti
 import 'package:ondas_mobile/features/search/domain/usecases/search_usecase.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_event.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_state.dart';
+import 'package:ondas_mobile/features/songs/domain/usecases/get_songs_usecase.dart';
+import 'package:ondas_mobile/features/tags/domain/entities/tag.dart';
+import 'package:ondas_mobile/features/tags/domain/usecases/get_tags_usecase.dart';
 
 class SearchBloc extends Bloc<SearchEvent, SearchState> {
   final SearchUseCase _searchUseCase;
   final GetSearchSuggestionsUseCase _getSuggestionsUseCase;
   final ClearSearchHistoryUseCase _clearHistoryUseCase;
+  final GetTagsUseCase _getTagsUseCase;
+  final GetSongsUseCase _getSongsUseCase;
 
   static const int _pageSize = 10;
 
@@ -23,15 +28,20 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     required SearchUseCase searchUseCase,
     required GetSearchSuggestionsUseCase getSuggestionsUseCase,
     required ClearSearchHistoryUseCase clearHistoryUseCase,
+    required GetTagsUseCase getTagsUseCase,
+    required GetSongsUseCase getSongsUseCase,
   })  : _searchUseCase = searchUseCase,
         _getSuggestionsUseCase = getSuggestionsUseCase,
         _clearHistoryUseCase = clearHistoryUseCase,
+        _getTagsUseCase = getTagsUseCase,
+        _getSongsUseCase = getSongsUseCase,
         super(const SearchSuggestionsLoading()) {
     on<SuggestionsRequested>(_onSuggestionsRequested);
     on<SearchHistoryCleared>(_onHistoryCleared);
     on<SearchSubmitted>(_onSubmitted);
     on<SearchLoadMoreRequested>(_onLoadMore);
     on<SearchCleared>(_onCleared);
+    on<TagSearchRequested>(_onTagSearchRequested);
   }
 
   Future<void> _onSuggestionsRequested(
@@ -39,12 +49,26 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     Emitter<SearchState> emit,
   ) async {
     emit(const SearchSuggestionsLoading());
-    final result = await _getSuggestionsUseCase();
-    await result.fold(
+    final suggestionsResult = await _getSuggestionsUseCase();
+    final tagsResult = await _getTagsUseCase();
+
+    final tags = tagsResult.fold<List<Tag>>(
+      (failure) => const [],
+      (data) => data,
+    );
+
+    await suggestionsResult.fold(
       (failure) async => emit(SearchFailure(message: failure.message)),
       (suggestion) async {
-        _cachedSuggestion = suggestion;
-        emit(SearchSuggestionsLoaded(suggestion: suggestion));
+        final merged = SearchSuggestion(
+          recentSearches: suggestion.recentSearches,
+          trendingSearches: suggestion.trendingSearches,
+          trendingSongs: suggestion.trendingSongs,
+          genres: suggestion.genres,
+          tags: tags,
+        );
+        _cachedSuggestion = merged;
+        emit(SearchSuggestionsLoaded(suggestion: merged));
       },
     );
   }
@@ -141,6 +165,35 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     Emitter<SearchState> emit,
   ) async {
     _restoreSuggestions(emit);
+  }
+
+  Future<void> _onTagSearchRequested(
+    TagSearchRequested event,
+    Emitter<SearchState> emit,
+  ) async {
+    if (event.tagIds.isEmpty) {
+      _restoreSuggestions(emit);
+      return;
+    }
+    emit(const SearchLoading());
+    final result = await _getSongsUseCase(GetSongsParams(tagIds: event.tagIds));
+    await result.fold(
+      (failure) async => emit(SearchFailure(message: failure.message)),
+      (data) async {
+        final hasMore = data.items.length >= _pageSize;
+        emit(SearchLoaded(
+          query: event.queryLabel,
+          songs: data.items,
+          artists: const [],
+          albums: const [],
+          totalSongs: data.totalElements,
+          totalArtists: 0,
+          totalAlbums: 0,
+          page: data.page,
+          hasMore: hasMore,
+        ));
+      },
+    );
   }
 
   void _restoreSuggestions(Emitter<SearchState> emit) {
