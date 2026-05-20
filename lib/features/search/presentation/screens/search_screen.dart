@@ -21,15 +21,16 @@ import 'package:ondas_mobile/features/search/presentation/widgets/search_section
 import 'package:ondas_mobile/features/search/presentation/widgets/search_song_tile_widget.dart';
 import 'package:ondas_mobile/features/search/presentation/widgets/search_suggestion_view.dart';
 import 'package:ondas_mobile/features/songs/presentation/screens/song_list_screen.dart';
+import 'package:ondas_mobile/features/tags/domain/entities/tag.dart';
 
 Song _summaryToSong(SongSummary s) => Song(
-      id: s.id,
-      title: s.title,
-      artistNames: s.artists.map((a) => a.name).toList(),
-      coverUrl: s.coverUrl,
-      audioUrl: s.audioUrl,
-      durationSeconds: s.durationSeconds,
-    );
+  id: s.id,
+  title: s.title,
+  artistNames: s.artists.map((a) => a.name).toList(),
+  coverUrl: s.coverUrl,
+  audioUrl: s.audioUrl,
+  durationSeconds: s.durationSeconds,
+);
 
 class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
@@ -53,6 +54,9 @@ class _SearchView extends StatefulWidget {
 class _SearchViewState extends State<_SearchView> {
   final TextEditingController _controller = TextEditingController();
   Timer? _debounce;
+  final Set<int> _selectedTagIds = {};
+  final Map<int, Tag> _selectedTags = {};
+  List<Tag> _availableTags = const [];
 
   @override
   void initState() {
@@ -68,6 +72,9 @@ class _SearchViewState extends State<_SearchView> {
   }
 
   void _onSearchChanged(String value) {
+    if (_selectedTagIds.isNotEmpty) {
+      setState(_clearTagSelection);
+    }
     _debounce?.cancel();
     if (value.trim().isEmpty) {
       context.read<SearchBloc>().add(const SearchCleared());
@@ -87,8 +94,64 @@ class _SearchViewState extends State<_SearchView> {
   }
 
   void _clearSearch() {
-    _controller.clear();
+    setState(() {
+      _controller.clear();
+      _clearTagSelection();
+    });
     context.read<SearchBloc>().add(const SearchCleared());
+  }
+
+  void _clearTagSelection() {
+    _selectedTagIds.clear();
+    _selectedTags.clear();
+  }
+
+  void _onTagToggled(Tag tag) {
+    setState(() {
+      if (_selectedTagIds.contains(tag.id)) {
+        _selectedTagIds.remove(tag.id);
+        _selectedTags.remove(tag.id);
+      } else {
+        _selectedTagIds.add(tag.id);
+        _selectedTags[tag.id] = tag;
+      }
+    });
+
+    _debounce?.cancel();
+    _controller.clear();
+
+    if (_selectedTagIds.isEmpty) {
+      context.read<SearchBloc>().add(const SearchCleared());
+      return;
+    }
+
+    _applyTagSearch();
+  }
+
+  void _removeTag(Tag tag) {
+    setState(() {
+      _selectedTagIds.remove(tag.id);
+      _selectedTags.remove(tag.id);
+    });
+
+    if (_selectedTagIds.isEmpty) {
+      _controller.clear();
+      context.read<SearchBloc>().add(const SearchCleared());
+      return;
+    }
+
+    _applyTagSearch();
+  }
+
+  void _applyTagSearch() {
+    if (_selectedTagIds.isEmpty) return;
+    final queryLabel = _selectedTags.values.map((tag) => tag.name).join(', ');
+    context.read<SearchBloc>().add(
+      TagSearchRequested(
+        tagIds: _selectedTagIds.toList(),
+        queryLabel: queryLabel,
+      ),
+    );
   }
 
   @override
@@ -97,19 +160,32 @@ class _SearchViewState extends State<_SearchView> {
       key: const Key('searchScreen_scaffold'),
       backgroundColor: AppColors.nearBlack,
       body: SafeArea(
-        child: Column(
-          children: [
-            _SearchBar(
-              controller: _controller,
-              onChanged: _onSearchChanged,
-              onClear: _clearSearch,
-            ),
-            Expanded(
-              child: _SearchBody(
-                onSearchTapped: _submitSearchImmediately,
+        child: BlocListener<SearchBloc, SearchState>(
+          listener: (context, state) {
+            if (state is SearchSuggestionsLoaded) {
+              setState(() => _availableTags = state.suggestion.tags);
+            }
+          },
+          child: Column(
+            children: [
+              _SearchBar(
+                controller: _controller,
+                onChanged: _onSearchChanged,
+                onClear: _clearSearch,
+                selectedTags: _selectedTags.values.toList(),
+                onRemoveTag: _removeTag,
               ),
-            ),
-          ],
+              Expanded(
+                child: _SearchBody(
+                  onSearchTapped: _submitSearchImmediately,
+                  selectedTagIds: _selectedTagIds,
+                  selectedTags: _selectedTags.values.toList(),
+                  availableTags: _availableTags,
+                  onTagToggled: _onTagToggled,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -120,11 +196,15 @@ class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
+  final List<Tag> selectedTags;
+  final ValueChanged<Tag> onRemoveTag;
 
   const _SearchBar({
     required this.controller,
     required this.onChanged,
     required this.onClear,
+    required this.selectedTags,
+    required this.onRemoveTag,
   });
 
   @override
@@ -143,9 +223,49 @@ class _SearchBar extends StatelessWidget {
         style: AppTypography.body.copyWith(color: AppColors.white),
         cursorColor: AppColors.spotifyGreen,
         decoration: InputDecoration(
-          hintText: 'Search songs, artists, albums...',
+          hintText: selectedTags.isNotEmpty
+              ? ''
+              : 'Search songs, artists, albums...',
           hintStyle: AppTypography.body.copyWith(color: AppColors.silver),
-          prefixIcon: const Icon(Icons.search, color: AppColors.silver),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 0,
+            minHeight: 0,
+          ),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.base,
+              right: AppSpacing.xs,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.search, color: AppColors.silver),
+                if (selectedTags.isNotEmpty) ...[
+                  const SizedBox(width: AppSpacing.xs),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: selectedTags
+                            .map(
+                              (tag) => Padding(
+                                padding: const EdgeInsets.only(
+                                  right: AppSpacing.xs,
+                                ),
+                                child: _SelectedTagChip(
+                                  tag: tag,
+                                  onRemove: () => onRemoveTag(tag),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
           suffixIcon: ValueListenableBuilder<TextEditingValue>(
             valueListenable: controller,
             builder: (_, value, _) {
@@ -183,8 +303,18 @@ class _SearchBar extends StatelessWidget {
 
 class _SearchBody extends StatelessWidget {
   final ValueChanged<String> onSearchTapped;
+  final Set<int> selectedTagIds;
+  final List<Tag> selectedTags;
+  final List<Tag> availableTags;
+  final ValueChanged<Tag> onTagToggled;
 
-  const _SearchBody({required this.onSearchTapped});
+  const _SearchBody({
+    required this.onSearchTapped,
+    required this.selectedTagIds,
+    required this.selectedTags,
+    required this.availableTags,
+    required this.onTagToggled,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,11 +323,19 @@ class _SearchBody extends StatelessWidget {
         SearchInitial() => const _LoadingView(),
         SearchSuggestionsLoading() => const _LoadingView(),
         SearchSuggestionsLoaded(:final suggestion) => SearchSuggestionView(
-            key: const Key('searchScreen_suggestions'),
-            suggestion: suggestion,
-            onSearchTapped: onSearchTapped,
-          ),
-        SearchLoading() => const _LoadingView(),
+          key: const Key('searchScreen_suggestions'),
+          suggestion: suggestion,
+          onSearchTapped: onSearchTapped,
+          selectedTagIds: selectedTagIds,
+          onTagToggled: onTagToggled,
+        ),
+        SearchLoading() => _SearchResultsWithTags(
+          selectedTagIds: selectedTagIds,
+          selectedTags: selectedTags,
+          availableTags: availableTags,
+          onTagToggled: onTagToggled,
+          results: const _LoadingView(),
+        ),
         SearchLoaded(
           :final songs,
           :final artists,
@@ -208,32 +346,80 @@ class _SearchBody extends StatelessWidget {
           :final query,
           :final hasMore,
         ) =>
-          _ResultsView(
-            query: query,
-            songs: songs,
-            artists: artists,
-            albums: albums,
-            totalSongs: totalSongs,
-            totalArtists: totalArtists,
-            totalAlbums: totalAlbums,
-            hasMore: hasMore,
-            isLoadingMore: state is SearchLoadingMore,
+          _SearchResultsWithTags(
+            selectedTagIds: selectedTagIds,
+            selectedTags: selectedTags,
+            availableTags: availableTags,
+            onTagToggled: onTagToggled,
+            results: _ResultsView(
+              query: query,
+              songs: songs,
+              artists: artists,
+              albums: albums,
+              totalSongs: totalSongs,
+              totalArtists: totalArtists,
+              totalAlbums: totalAlbums,
+              hasMore: hasMore,
+              isLoadingMore: state is SearchLoadingMore,
+            ),
           ),
         SearchFailure(:final message) => _ErrorView(
-            message: message,
-            onRetry: () {
-              final viewState =
-                  context.findAncestorStateOfType<_SearchViewState>();
-              final query = viewState?._controller.text.trim() ?? '';
-              if (query.isNotEmpty) {
-                context.read<SearchBloc>().add(SearchSubmitted(query));
-              } else {
-                context.read<SearchBloc>().add(const SuggestionsRequested());
-              }
-            },
-          ),
+          message: message,
+          onRetry: () {
+            final viewState = context
+                .findAncestorStateOfType<_SearchViewState>();
+            final query = viewState?._controller.text.trim() ?? '';
+            if (query.isNotEmpty) {
+              context.read<SearchBloc>().add(SearchSubmitted(query));
+            } else {
+              context.read<SearchBloc>().add(const SuggestionsRequested());
+            }
+          },
+        ),
         _ => const SizedBox.shrink(),
       },
+    );
+  }
+}
+
+class _SearchResultsWithTags extends StatelessWidget {
+  final Set<int> selectedTagIds;
+  final List<Tag> selectedTags;
+  final List<Tag> availableTags;
+  final ValueChanged<Tag> onTagToggled;
+  final Widget results;
+
+  const _SearchResultsWithTags({
+    required this.selectedTagIds,
+    required this.selectedTags,
+    required this.availableTags,
+    required this.onTagToggled,
+    required this.results,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (selectedTags.isEmpty || availableTags.isEmpty) return results;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 220),
+          child: SingleChildScrollView(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TagBrowseSection(
+                key: const Key('searchScreen_resultsTagPicker'),
+                tags: availableTags,
+                selectedTagIds: selectedTagIds,
+                onTagTapped: onTagToggled,
+              ),
+            ),
+          ),
+        ),
+        Expanded(child: results),
+      ],
     );
   }
 }
@@ -261,7 +447,11 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.negativeRed, size: 48),
+          const Icon(
+            Icons.error_outline,
+            color: AppColors.negativeRed,
+            size: 48,
+          ),
           const SizedBox(height: AppSpacing.md),
           Text(
             message,
@@ -306,8 +496,7 @@ class _ResultsView extends StatelessWidget {
     required this.isLoadingMore,
   });
 
-  bool get _isEmpty =>
-      songs.isEmpty && artists.isEmpty && albums.isEmpty;
+  bool get _isEmpty => songs.isEmpty && artists.isEmpty && albums.isEmpty;
 
   @override
   Widget build(BuildContext context) {
@@ -321,59 +510,68 @@ class _ResultsView extends StatelessWidget {
           if (songs.isNotEmpty) ...[
             SearchSectionHeaderWidget(title: 'Songs', total: totalSongs),
             _SectionList(
-              children: songs.map(
-                (song) => SearchSongTileWidget(
-                  key: Key('searchScreen_songTile_${song.id}'),
-                  song: song,
-                  onTap: () {
-                    final queue =
-                        songs.map((s) => _summaryToSong(s as SongSummary)).toList();
-                    final idx = songs.indexOf(song);
-                    context.read<PlayerBloc>().add(PlaySongRequested(
-                      songs: queue,
-                      index: idx < 0 ? 0 : idx,
-                    ));
-                  },
-                ),
-              ).toList(),
+              children: songs
+                  .map(
+                    (song) => SearchSongTileWidget(
+                      key: Key('searchScreen_songTile_${song.id}'),
+                      song: song,
+                      onTap: () {
+                        final queue = songs
+                            .map((s) => _summaryToSong(s as SongSummary))
+                            .toList();
+                        final idx = songs.indexOf(song);
+                        context.read<PlayerBloc>().add(
+                          PlaySongRequested(
+                            songs: queue,
+                            index: idx < 0 ? 0 : idx,
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                  .toList(),
             ),
           ],
           if (artists.isNotEmpty) ...[
             SearchSectionHeaderWidget(title: 'Artists', total: totalArtists),
             _SectionList(
-              children: artists.map(
-                (artist) => SearchArtistTileWidget(
-                  key: Key('searchScreen_artistTile_${artist.id}'),
-                  artist: artist,
-                  onTap: () => context.push(
-                    '/songs/artist/${artist.id}',
-                    extra: SongListRouteData(
-                      artistId: artist.id,
-                      title: artist.name,
-                      coverUrl: artist.avatarUrl,
+              children: artists
+                  .map(
+                    (artist) => SearchArtistTileWidget(
+                      key: Key('searchScreen_artistTile_${artist.id}'),
+                      artist: artist,
+                      onTap: () => context.push(
+                        '/songs/artist/${artist.id}',
+                        extra: SongListRouteData(
+                          artistId: artist.id,
+                          title: artist.name,
+                          coverUrl: artist.avatarUrl,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ).toList(),
+                  )
+                  .toList(),
             ),
           ],
           if (albums.isNotEmpty) ...[
             SearchSectionHeaderWidget(title: 'Albums', total: totalAlbums),
             _SectionList(
-              children: albums.map(
-                (album) => SearchAlbumTileWidget(
-                  key: Key('searchScreen_albumTile_${album.id}'),
-                  album: album,
-                  onTap: () => context.push(
-                    '/songs/album/${album.id}',
-                    extra: SongListRouteData(
-                      albumId: album.id,
-                      title: album.title,
-                      coverUrl: album.coverUrl,
+              children: albums
+                  .map(
+                    (album) => SearchAlbumTileWidget(
+                      key: Key('searchScreen_albumTile_${album.id}'),
+                      album: album,
+                      onTap: () => context.push(
+                        '/songs/album/${album.id}',
+                        extra: SongListRouteData(
+                          albumId: album.id,
+                          title: album.title,
+                          coverUrl: album.coverUrl,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ).toList(),
+                  )
+                  .toList(),
             ),
           ],
           if (isLoadingMore)
@@ -399,6 +597,60 @@ class _SectionList extends StatefulWidget {
   State<_SectionList> createState() => _SectionListState();
 }
 
+class _SelectedTagChip extends StatelessWidget {
+  final Tag tag;
+  final VoidCallback onRemove;
+
+  const _SelectedTagChip({required this.tag, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _resolveTagColor(tag);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: color.withAlpha(38),
+        borderRadius: BorderRadius.circular(AppRadius.fullPill),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(tag.name, style: AppTypography.caption.copyWith(color: color)),
+          const SizedBox(width: AppSpacing.xs),
+          GestureDetector(
+            onTap: onRemove,
+            child: Icon(Icons.close, size: 14, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _resolveTagColor(Tag tag) {
+    final fromHex = _tryParseHex(tag.colorHex);
+    if (fromHex != null) return fromHex;
+
+    return switch (tag.type) {
+      'mood' => const Color(0xFF7F5CFF),
+      'activity' => const Color(0xFFF6A43B),
+      'theme' => const Color(0xFF3CB371),
+      'era' => const Color(0xFFEA6A5E),
+      _ => AppColors.lightBorder,
+    };
+  }
+
+  Color? _tryParseHex(String? hex) {
+    if (hex == null || !hex.startsWith('#') || hex.length != 7) return null;
+    final value = int.tryParse(hex.substring(1), radix: 16);
+    if (value == null) return null;
+    return Color(0xFF000000 | value);
+  }
+}
+
 class _SectionListState extends State<_SectionList> {
   final ScrollController _scrollController = ScrollController();
 
@@ -412,7 +664,10 @@ class _SectionListState extends State<_SectionList> {
   Widget build(BuildContext context) {
     final itemHeight = 72.0;
     final maxVisible = 5;
-    final height = (widget.children.length * itemHeight).clamp(0.0, itemHeight * maxVisible);
+    final height = (widget.children.length * itemHeight).clamp(
+      0.0,
+      itemHeight * maxVisible,
+    );
 
     return SizedBox(
       height: height,

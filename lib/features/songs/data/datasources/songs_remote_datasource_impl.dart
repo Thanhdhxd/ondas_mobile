@@ -14,6 +14,7 @@ class SongsRemoteDatasourceImpl implements SongsRemoteDatasource {
     String? artistId,
     String? albumId,
     int? genreId,
+    List<int>? tagIds,
     int page = 0,
     int size = 20,
   }) async {
@@ -23,6 +24,7 @@ class SongsRemoteDatasourceImpl implements SongsRemoteDatasource {
       if (artistId != null) 'artistId': artistId,
       if (albumId != null) 'albumId': albumId,
       if (genreId != null) 'genreId': genreId,
+      if (tagIds != null && tagIds.isNotEmpty) 'tagIds': tagIds,
     };
 
     final response = await _dioClient.get<Map<String, dynamic>>(

@@ -18,19 +18,29 @@ final class LibraryLoading extends LibraryState {
 
 final class LibraryLoaded extends LibraryState {
   final List<PlaylistSummary> playlists;
+  final List<PlaylistSummary> systemPlaylists;
   final bool isCreating;
 
-  const LibraryLoaded({required this.playlists, this.isCreating = false});
+  const LibraryLoaded({
+    required this.playlists,
+    this.systemPlaylists = const [],
+    this.isCreating = false,
+  });
 
-  LibraryLoaded copyWith({List<PlaylistSummary>? playlists, bool? isCreating}) {
+  LibraryLoaded copyWith({
+    List<PlaylistSummary>? playlists,
+    List<PlaylistSummary>? systemPlaylists,
+    bool? isCreating,
+  }) {
     return LibraryLoaded(
       playlists: playlists ?? this.playlists,
+      systemPlaylists: systemPlaylists ?? this.systemPlaylists,
       isCreating: isCreating ?? this.isCreating,
     );
   }
 
   @override
-  List<Object?> get props => [playlists, isCreating];
+  List<Object?> get props => [playlists, systemPlaylists, isCreating];
 }
 
 final class LibraryError extends LibraryState {

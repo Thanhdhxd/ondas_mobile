@@ -31,4 +31,8 @@ abstract class PlaylistRepository {
     required String playlistId,
     required List<String> songIds,
   });
+
+  Future<List<PlaylistSummary>> getSystemPlaylists();
+
+  Future<PlaylistDetail> getSystemPlaylistDetail(String id);
 }

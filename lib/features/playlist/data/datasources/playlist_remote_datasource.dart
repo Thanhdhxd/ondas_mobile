@@ -27,4 +27,8 @@ abstract class PlaylistRemoteDatasource {
     required String playlistId,
     required List<String> songIds,
   });
+
+  Future<List<PlaylistSummaryModel>> getSystemPlaylists();
+
+  Future<PlaylistDetailModel> getSystemPlaylistDetail(String id);
 }

@@ -64,4 +64,12 @@ class PlaylistRepositoryImpl implements PlaylistRepository {
     required List<String> songIds,
   }) =>
       _datasource.reorderPlaylistSongs(playlistId: playlistId, songIds: songIds);
+
+  @override
+  Future<List<PlaylistSummary>> getSystemPlaylists() =>
+      _datasource.getSystemPlaylists();
+
+  @override
+  Future<PlaylistDetail> getSystemPlaylistDetail(String id) =>
+      _datasource.getSystemPlaylistDetail(id);
 }

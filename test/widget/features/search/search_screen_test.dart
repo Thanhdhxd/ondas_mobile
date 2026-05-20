@@ -22,8 +22,6 @@ class MockPlayerBloc extends MockBloc<PlayerEvent, PlayerState>
 
 class _FakeSearchEvent extends Fake implements SearchEvent {}
 
-class _FakePlayerEvent extends Fake implements PlayerEvent {}
-
 final _tSongs = List.generate(
   3,
   (i) => SongSummary(
@@ -73,15 +71,15 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_FakeSearchEvent());
-    registerFallbackValue(_FakePlayerEvent());
+    registerFallbackValue(const PauseRequested());
   });
 
   setUp(() {
     mockSearchBloc = MockSearchBloc();
     mockPlayerBloc = MockPlayerBloc();
-    when(() => mockPlayerBloc.state).thenReturn(
-      const PlayerState(status: PlayerStatus.idle),
-    );
+    when(
+      () => mockPlayerBloc.state,
+    ).thenReturn(const PlayerState(status: PlayerStatus.idle));
   });
 
   Widget buildSubject() {
@@ -105,18 +103,20 @@ void main() {
       expect(find.byKey(const Key('searchScreen_searchField')), findsOneWidget);
     });
 
-    testWidgets('shows empty prompt when state is SearchInitial',
-        (tester) async {
+    testWidgets('shows empty prompt when state is SearchInitial', (
+      tester,
+    ) async {
       when(() => mockSearchBloc.state).thenReturn(const SearchInitial());
 
       await tester.pumpWidget(buildSubject());
 
-      expect(find.byIcon(Icons.search), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsNWidgets(2));
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
-    testWidgets('shows loading indicator when state is SearchLoading',
-        (tester) async {
+    testWidgets('shows loading indicator when state is SearchLoading', (
+      tester,
+    ) async {
       when(() => mockSearchBloc.state).thenReturn(const SearchLoading());
 
       await tester.pumpWidget(buildSubject());
@@ -124,11 +124,12 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('shows error and retry button when state is SearchFailure',
-        (tester) async {
-      when(() => mockSearchBloc.state).thenReturn(
-        const SearchFailure(message: 'Server error'),
-      );
+    testWidgets('shows error and retry button when state is SearchFailure', (
+      tester,
+    ) async {
+      when(
+        () => mockSearchBloc.state,
+      ).thenReturn(const SearchFailure(message: 'Server error'));
 
       await tester.pumpWidget(buildSubject());
 
@@ -136,7 +137,9 @@ void main() {
       expect(find.byKey(const Key('searchScreen_retryButton')), findsOneWidget);
     });
 
-    testWidgets('shows results list when state is SearchLoaded', (tester) async {
+    testWidgets('shows results list when state is SearchLoaded', (
+      tester,
+    ) async {
       when(() => mockSearchBloc.state).thenReturn(_tLoaded);
 
       await tester.pumpWidget(buildSubject());
@@ -147,8 +150,9 @@ void main() {
       expect(find.text('Album 0'), findsOneWidget);
     });
 
-    testWidgets('shows section headers with counts when SearchLoaded',
-        (tester) async {
+    testWidgets('shows section headers with counts when SearchLoaded', (
+      tester,
+    ) async {
       when(() => mockSearchBloc.state).thenReturn(_tLoaded);
 
       await tester.pumpWidget(buildSubject());
@@ -158,7 +162,9 @@ void main() {
       expect(find.text('Album'), findsOneWidget);
     });
 
-    testWidgets('tapping clear button dispatches SearchCleared', (tester) async {
+    testWidgets('tapping clear button dispatches SearchCleared', (
+      tester,
+    ) async {
       when(() => mockSearchBloc.state).thenReturn(const SearchInitial());
 
       await tester.pumpWidget(buildSubject());
@@ -213,19 +219,12 @@ class _SearchViewUnderTest extends StatelessWidget {
               child: BlocBuilder<SearchBloc, SearchState>(
                 builder: (context, state) => switch (state) {
                   SearchInitial() => const Center(
-                      child: Icon(Icons.search, size: 64),
-                    ),
+                    child: Icon(Icons.search, size: 64),
+                  ),
                   SearchLoading() => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  SearchLoaded(
-                    :final songs,
-                    :final artists,
-                    :final albums,
-                    :final totalSongs,
-                    :final totalArtists,
-                    :final totalAlbums,
-                  ) =>
+                    child: CircularProgressIndicator(),
+                  ),
+                  SearchLoaded(:final songs, :final artists, :final albums) =>
                     ListView(
                       key: const Key('searchScreen_resultsList'),
                       children: [
@@ -244,18 +243,18 @@ class _SearchViewUnderTest extends StatelessWidget {
                       ],
                     ),
                   SearchFailure(:final message) => Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(message),
-                          TextButton(
-                            key: const Key('searchScreen_retryButton'),
-                            onPressed: () {},
-                            child: const Text('Thử lại'),
-                          ),
-                        ],
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(message),
+                        TextButton(
+                          key: const Key('searchScreen_retryButton'),
+                          onPressed: () {},
+                          child: const Text('Thử lại'),
+                        ),
+                      ],
                     ),
+                  ),
                   _ => const SizedBox.shrink(),
                 },
               ),
