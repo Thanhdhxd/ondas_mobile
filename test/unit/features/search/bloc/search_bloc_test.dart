@@ -14,6 +14,8 @@ import 'package:ondas_mobile/features/search/domain/usecases/search_usecase.dart
 import 'package:ondas_mobile/features/search/presentation/bloc/search_bloc.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_event.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_state.dart';
+import 'package:ondas_mobile/features/songs/domain/usecases/get_songs_usecase.dart';
+import 'package:ondas_mobile/features/tags/domain/usecases/get_tags_usecase.dart';
 
 class MockSearchUseCase extends Mock implements SearchUseCase {}
 
@@ -23,6 +25,10 @@ class MockGetSearchSuggestionsUseCase extends Mock
 class MockClearSearchHistoryUseCase extends Mock
     implements ClearSearchHistoryUseCase {}
 
+class MockGetTagsUseCase extends Mock implements GetTagsUseCase {}
+
+class MockGetSongsUseCase extends Mock implements GetSongsUseCase {}
+
 class _FakeSearchParams extends Fake implements SearchParams {}
 
 void main() {
@@ -30,6 +36,8 @@ void main() {
   late MockSearchUseCase mockUseCase;
   late MockGetSearchSuggestionsUseCase mockGetSuggestionsUseCase;
   late MockClearSearchHistoryUseCase mockClearHistoryUseCase;
+  late MockGetTagsUseCase mockGetTagsUseCase;
+  late MockGetSongsUseCase mockGetSongsUseCase;
 
   final tSongs = List.generate(
     3,
@@ -67,6 +75,7 @@ void main() {
     trendingSearches: [],
     trendingSongs: [],
     genres: [],
+    tags: [],
   );
 
   SearchResult _buildResult({int page = 0}) => SearchResult(
@@ -89,15 +98,20 @@ void main() {
     mockUseCase = MockSearchUseCase();
     mockGetSuggestionsUseCase = MockGetSearchSuggestionsUseCase();
     mockClearHistoryUseCase = MockClearSearchHistoryUseCase();
+    mockGetTagsUseCase = MockGetTagsUseCase();
+    mockGetSongsUseCase = MockGetSongsUseCase();
 
     // Default stub: suggestions always succeed
     when(() => mockGetSuggestionsUseCase())
         .thenAnswer((_) async => const Right(tSuggestion));
+    when(() => mockGetTagsUseCase()).thenAnswer((_) async => const Right([]));
 
     bloc = SearchBloc(
       searchUseCase: mockUseCase,
       getSuggestionsUseCase: mockGetSuggestionsUseCase,
       clearHistoryUseCase: mockClearHistoryUseCase,
+      getTagsUseCase: mockGetTagsUseCase,
+      getSongsUseCase: mockGetSongsUseCase,
     );
   });
 

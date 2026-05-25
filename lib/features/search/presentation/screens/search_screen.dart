@@ -109,6 +109,8 @@ class _SearchViewState extends State<_SearchView> {
     } else {
       context.read<SearchBloc>().add(const SuggestionsRequested());
     }
+  }
+
   void _clearTagSelection() {
     _selectedTagIds.clear();
     _selectedTags.clear();
@@ -171,35 +173,32 @@ class _SearchViewState extends State<_SearchView> {
         key: const Key('searchScreen_scaffold'),
         backgroundColor: AppColors.nearBlack,
         body: SafeArea(
-    return Scaffold(
-      key: const Key('searchScreen_scaffold'),
-      backgroundColor: AppColors.nearBlack,
-      body: SafeArea(
-        child: BlocListener<SearchBloc, SearchState>(
-          listener: (context, state) {
-            if (state is SearchSuggestionsLoaded) {
-              setState(() => _availableTags = state.suggestion.tags);
-            }
-          },
-          child: Column(
-            children: [
-              _SearchBar(
-                controller: _controller,
-                onChanged: _onSearchChanged,
-                onClear: _clearSearch,
-                selectedTags: _selectedTags.values.toList(),
-                onRemoveTag: _removeTag,
-              ),
-              Expanded(
-                child: _SearchBody(
-                  onSearchTapped: _submitSearchImmediately,
-                  selectedTagIds: _selectedTagIds,
+          child: BlocListener<SearchBloc, SearchState>(
+            listener: (context, state) {
+              if (state is SearchSuggestionsLoaded) {
+                setState(() => _availableTags = state.suggestion.tags);
+              }
+            },
+            child: Column(
+              children: [
+                _SearchBar(
+                  controller: _controller,
+                  onChanged: _onSearchChanged,
+                  onClear: _clearSearch,
                   selectedTags: _selectedTags.values.toList(),
-                  availableTags: _availableTags,
-                  onTagToggled: _onTagToggled,
+                  onRemoveTag: _removeTag,
                 ),
-              ),
-            ],
+                Expanded(
+                  child: _SearchBody(
+                    onSearchTapped: _submitSearchImmediately,
+                    selectedTagIds: _selectedTagIds,
+                    selectedTags: _selectedTags.values.toList(),
+                    availableTags: _availableTags,
+                    onTagToggled: _onTagToggled,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
