@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
+import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/profile/domain/entities/user_profile.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
@@ -44,23 +45,33 @@ class ProfileScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Profile'),
-            backgroundColor: AppColors.nearBlack,
+        return ReconnectListener(
+          shouldReconnect: () =>
+              context.read<ProfileBloc>().state is ProfileFailure,
+          onReconnect: () =>
+              context.read<ProfileBloc>().add(const ProfileLoadRequested()),
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Profile'),
+              backgroundColor: AppColors.nearBlack,
+            ),
+            body: switch (state) {
+              ProfileLoading() => const _LoadingView(),
+              ProfileLoaded(:final userProfile) =>
+                _ContentView(userProfile: userProfile),
+              ProfileUpdateSuccess(:final userProfile) =>
+                _ContentView(userProfile: userProfile),
+              ProfileAvatarUploadSuccess(:final userProfile) =>
+                _ContentView(userProfile: userProfile),
+              ProfileFailure(:final message) => _ErrorView(
+                  message: message,
+                  onRetry: () => context
+                      .read<ProfileBloc>()
+                      .add(const ProfileLoadRequested()),
+                ),
+              _ => const _LoadingView(),
+            },
           ),
-          body: switch (state) {
-            ProfileLoading() => const _LoadingView(),
-            ProfileLoaded(:final userProfile) => _ContentView(userProfile: userProfile),
-            ProfileUpdateSuccess(:final userProfile) => _ContentView(userProfile: userProfile),
-            ProfileAvatarUploadSuccess(:final userProfile) => _ContentView(userProfile: userProfile),
-            ProfileFailure(:final message) => _ErrorView(
-                message: message,
-                onRetry: () =>
-                    context.read<ProfileBloc>().add(const ProfileLoadRequested()),
-              ),
-            _ => const _LoadingView(),
-          },
         );
       },
     );

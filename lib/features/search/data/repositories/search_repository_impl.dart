@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:ondas_mobile/core/error/failures.dart';
+import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/features/search/data/datasources/search_remote_datasource.dart';
 import 'package:ondas_mobile/features/search/domain/entities/search_result.dart';
 import 'package:ondas_mobile/features/search/domain/entities/search_suggestion.dart';
@@ -52,9 +53,6 @@ class SearchRepositoryImpl implements SearchRepository {
   }
 
   Failure _mapDioError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == 401) return const UnauthorizedFailure();
-    final message = e.response?.data?['message'] ?? e.message ?? 'Network error';
-    return ServerFailure(message: message as String, statusCode: statusCode);
+    return DioFailureMapper.map(e);
   }
 }

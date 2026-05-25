@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/features/favorites/domain/usecases/get_favorites_usecase.dart';
 import 'package:ondas_mobile/features/favorites/domain/usecases/remove_favorite_usecase.dart';
 import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_event.dart';
@@ -33,6 +35,8 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
         hasMore: result.page < result.totalPages - 1,
         currentPage: result.page,
       ));
+    } on DioException catch (e) {
+      emit(FavoritesListError(DioFailureMapper.map(e).message));
     } catch (e) {
       emit(FavoritesListError(e.toString()));
     }

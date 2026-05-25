@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:ondas_mobile/core/error/failures.dart';
+import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/core/storage/secure_storage.dart';
 import 'package:ondas_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:ondas_mobile/features/auth/domain/entities/user.dart';
@@ -103,16 +104,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   Failure _mapDioError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == 401) return const UnauthorizedFailure();
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return NetworkFailure(message: 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.');
-    }
-    final message = e.response?.data?['message'] as String? ??
-        e.message ??
-        'Đã xảy ra lỗi không xác định.';
-    return ServerFailure(message: message, statusCode: statusCode);
+    return DioFailureMapper.map(e);
   }
 }

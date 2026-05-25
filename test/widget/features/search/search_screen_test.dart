@@ -22,8 +22,6 @@ class MockPlayerBloc extends MockBloc<PlayerEvent, PlayerState>
 
 class _FakeSearchEvent extends Fake implements SearchEvent {}
 
-class _FakePlayerEvent extends Fake implements PlayerEvent {}
-
 final _tSongs = List.generate(
   3,
   (i) => SongSummary(
@@ -73,7 +71,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(_FakeSearchEvent());
-    registerFallbackValue(_FakePlayerEvent());
+    registerFallbackValue(const PauseRequested());
   });
 
   setUp(() {
@@ -111,7 +109,9 @@ void main() {
 
       await tester.pumpWidget(buildSubject());
 
-      expect(find.byIcon(Icons.search), findsOneWidget);
+      // There are 2 search icons: one in the TextField prefix and one in the
+      // empty-state Center widget. We just verify at least one is present.
+      expect(find.byIcon(Icons.search), findsWidgets);
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 

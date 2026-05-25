@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:ondas_mobile/core/error/failures.dart';
+import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/features/home/data/datasources/home_remote_datasource.dart';
 import 'package:ondas_mobile/features/home/domain/entities/home_data.dart';
 import 'package:ondas_mobile/features/home/domain/repositories/home_repository.dart';
@@ -23,12 +24,9 @@ class HomeRepositoryImpl implements HomeRepository {
   }
 
   Failure _mapDioError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == 401) return const UnauthorizedFailure();
-    if (statusCode == 404) {
-      return NotFoundFailure(message: e.response?.data?['message'] ?? 'Not found');
-    }
-    final message = e.response?.data?['message'] ?? e.message ?? 'Network error';
-    return ServerFailure(message: message as String, statusCode: statusCode);
+    return DioFailureMapper.map(
+      e,
+      notFoundMessage: 'Not found',
+    );
   }
 }

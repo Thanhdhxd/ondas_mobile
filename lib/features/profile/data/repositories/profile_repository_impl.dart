@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:ondas_mobile/core/error/failures.dart';
 import 'package:ondas_mobile/core/network/api_response.dart';
+import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/features/profile/data/datasources/profile_remote_datasource.dart';
 import 'package:ondas_mobile/features/profile/domain/entities/play_history_item.dart';
 import 'package:ondas_mobile/features/profile/domain/entities/user_profile.dart';
@@ -69,17 +70,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   Failure _mapDioError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == 401) return const UnauthorizedFailure();
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return NetworkFailure(message: 'Không thể kết nối máy chủ. Vui lòng kiểm tra kết nối mạng.');
-    }
-    final message = e.response?.data?['message'] as String? ??
-        e.message ??
-        'Đã xảy ra lỗi không xác định.';
-    return ServerFailure(message: message, statusCode: statusCode);
+    return DioFailureMapper.map(e);
   }
 
   @override

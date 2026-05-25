@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ondas_mobile/app/router/app_router.dart';
 import 'package:ondas_mobile/core/constants/app_constants.dart';
 import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/network/network_status.dart';
+import 'package:ondas_mobile/core/network/network_status_cubit.dart';
 import 'package:ondas_mobile/core/theme/app_theme.dart';
+import 'package:ondas_mobile/core/widgets/offline_banner.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 
 class App extends StatelessWidget {
@@ -18,12 +21,36 @@ class App extends StatelessWidget {
         BlocProvider<PlayerBloc>(
           create: (_) => sl<PlayerBloc>(),
         ),
+        BlocProvider<NetworkStatusCubit>(
+          create: (_) => sl<NetworkStatusCubit>(),
+        ),
       ],
-      child: MaterialApp.router(
-        title: AppConstants.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.dark,
-        routerConfig: router,
+      child: BlocBuilder<NetworkStatusCubit, NetworkStatus>(
+        builder: (context, status) {
+          return MaterialApp.router(
+            title: AppConstants.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.dark,
+            routerConfig: router,
+            builder: (context, child) {
+              final content = child ?? const SizedBox.shrink();
+              return Column(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: status.isOffline
+                        ? const OfflineBanner(
+                            key: ValueKey('offline_banner'),
+                            message: AppConstants.offlineBannerMessage,
+                          )
+                        : const SizedBox.shrink(key: ValueKey('online_spacer')),
+                  ),
+                  Expanded(child: content),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }

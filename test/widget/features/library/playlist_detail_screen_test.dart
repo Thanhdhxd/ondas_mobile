@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ondas_mobile/features/library/presentation/bloc/playlist_detail_bloc.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/playlist_detail_screen.dart';
+import 'package:ondas_mobile/features/player/domain/entities/player_status.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_event.dart';
@@ -18,8 +19,6 @@ class MockPlaylistDetailBloc
 
 class MockPlayerBloc extends MockBloc<PlayerEvent, PlayerState>
     implements PlayerBloc {}
-
-class _FakePlayerEvent extends Fake implements PlayerEvent {}
 
 const tSong1 = PlaylistSongItem(
   position: 1,
@@ -52,12 +51,14 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const PlaylistDetailSongRemoved(''));
-    registerFallbackValue(_FakePlayerEvent());
+    registerFallbackValue(const PauseRequested());
   });
 
   setUp(() {
     mockBloc = MockPlaylistDetailBloc();
     mockPlayerBloc = MockPlayerBloc();
+    when(() => mockPlayerBloc.state)
+        .thenReturn(const PlayerState(status: PlayerStatus.idle));
   });
 
   Widget buildSubject() {
