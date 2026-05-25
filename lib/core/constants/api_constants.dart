@@ -34,6 +34,10 @@ class ApiConstants {
   static const String genresSearch = '/api/genres/search';
   static String genreById(int id) => '/api/genres/$id';
 
+  // Tags
+  static const String tags = '/api/tags';
+  static const String tagsSearch = '/api/tags/search';
+
   // Home
   static const String home = '/api/home';
 
@@ -54,6 +58,10 @@ class ApiConstants {
       '/api/playlists/$id/songs/$songId';
   static String playlistSongsReorder(String id) =>
       '/api/playlists/$id/songs/reorder';
+
+  // System playlists (read-only for users)
+  static const String systemPlaylists = '/api/system-playlists';
+  static String systemPlaylistById(String id) => '/api/system-playlists/$id';
 
   // Favorites
   static const String favorites = '/api/favorites';

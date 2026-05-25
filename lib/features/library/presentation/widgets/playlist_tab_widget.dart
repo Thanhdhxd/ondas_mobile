@@ -4,6 +4,8 @@ import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/library/presentation/bloc/library_bloc.dart';
 import 'package:ondas_mobile/features/library/presentation/widgets/library_playlist_item_widget.dart';
+import 'package:ondas_mobile/features/library/presentation/widgets/system_playlist_item_widget.dart';
+import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 import 'package:ondas_mobile/features/playlist/presentation/widgets/create_playlist_dialog.dart';
 
 class PlaylistTabWidget extends StatelessWidget {
@@ -46,20 +48,20 @@ class PlaylistTabWidget extends StatelessWidget {
                       color: AppColors.spotifyGreen,
                     ),
                   ),
-                )
-              else if (state is LibraryError)
-                SliverFillRemaining(
-                  child: _ErrorView(
-                    message: state.message,
-                    onRetry: () => context
-                        .read<LibraryBloc>()
-                        .add(const LibraryRefreshRequested()),
-                  ),
-                )
-              else if (state is LibraryLoaded) ...[
-                _MyPlaylistsSection(playlists: state.playlists),
-                const _SystemPlaylistsSection(),
-              ],
+                ),
+              )
+            else if (state is LibraryError)
+              SliverFillRemaining(
+                child: _ErrorView(
+                  message: state.message,
+                  onRetry: () => context
+                      .read<LibraryBloc>()
+                      .add(const LibraryRefreshRequested()),
+                ),
+              )
+            else if (state is LibraryLoaded) ...[
+              _MyPlaylistsSection(playlists: state.playlists),
+              _SystemPlaylistsSection(playlists: state.systemPlaylists),
             ],
           );
         },
@@ -148,14 +150,30 @@ class _MyPlaylistsSection extends StatelessWidget {
 }
 
 class _SystemPlaylistsSection extends StatelessWidget {
-  const _SystemPlaylistsSection();
+  final List<PlaylistSummary> playlists;
+
+  const _SystemPlaylistsSection({required this.playlists});
 
   @override
   Widget build(BuildContext context) {
-    return const SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.only(top: 8, bottom: 32),
-        child: _SectionHeader(title: 'System Playlists'),
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          if (index == 0) {
+            return const _SectionHeader(title: 'System Playlists');
+          }
+          if (playlists.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 32),
+              child: Text(
+                'Chưa có system playlist.',
+                style: TextStyle(color: AppColors.silver, fontSize: 14),
+              ),
+            );
+          }
+          return SystemPlaylistItemWidget(playlist: playlists[index - 1]);
+        },
+        childCount: playlists.isEmpty ? 2 : playlists.length + 1,
       ),
     );
   }

@@ -159,4 +159,32 @@ class PlaylistRemoteDatasourceImpl implements PlaylistRemoteDatasource {
       data: {'songIds': songIds},
     );
   }
+
+  @override
+  Future<List<PlaylistSummaryModel>> getSystemPlaylists() async {
+    final response = await _dioClient.get<Map<String, dynamic>>(
+      ApiConstants.systemPlaylists,
+      queryParameters: {'page': 0, 'size': 100},
+    );
+    final apiResponse = ApiResponse.fromJson(
+      response.data!,
+      (json) => PageResult.fromJson(
+        json as Map<String, dynamic>,
+        PlaylistSummaryModel.fromJson,
+      ),
+    );
+    return apiResponse.data!.items;
+  }
+
+  @override
+  Future<PlaylistDetailModel> getSystemPlaylistDetail(String id) async {
+    final response = await _dioClient.get<Map<String, dynamic>>(
+      ApiConstants.systemPlaylistById(id),
+    );
+    final apiResponse = ApiResponse.fromJson(
+      response.data!,
+      (json) => PlaylistDetailModel.fromJson(json as Map<String, dynamic>),
+    );
+    return apiResponse.data!;
+  }
 }

@@ -16,6 +16,7 @@ class GetSongsUseCaseImpl implements GetSongsUseCase {
       artistId: params.artistId,
       albumId: params.albumId,
       genreId: params.genreId,
+      tagIds: params.tagIds,
       page: params.page,
       size: params.size,
     );

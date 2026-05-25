@@ -11,15 +11,22 @@ class GetSongsParams {
   final String? artistId;
   final String? albumId;
   final int? genreId;
+  final List<int>? tagIds;
   final int page;
   final int size;
 
-  const GetSongsParams({
+  GetSongsParams({
     this.artistId,
     this.albumId,
     this.genreId,
+    this.tagIds,
     this.page = 0,
     this.size = 20,
-  }) : assert(artistId != null || albumId != null || genreId != null,
-            'At least one filter (artistId, albumId, or genreId) must be provided');
+  }) : assert(
+          artistId != null ||
+              albumId != null ||
+              genreId != null ||
+              (tagIds != null && tagIds.isNotEmpty),
+          'At least one filter (artistId, albumId, genreId, or tagIds) must be provided',
+        );
 }

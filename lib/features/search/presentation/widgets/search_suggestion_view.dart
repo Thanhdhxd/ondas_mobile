@@ -13,15 +13,20 @@ import 'package:ondas_mobile/features/search/domain/entities/search_suggestion.d
 import 'package:ondas_mobile/features/search/presentation/bloc/search_bloc.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_event.dart';
 import 'package:ondas_mobile/features/songs/presentation/screens/song_list_screen.dart';
+import 'package:ondas_mobile/features/tags/domain/entities/tag.dart';
 
 class SearchSuggestionView extends StatelessWidget {
   final SearchSuggestion suggestion;
   final ValueChanged<String> onSearchTapped;
+  final Set<int> selectedTagIds;
+  final ValueChanged<Tag> onTagToggled;
 
   const SearchSuggestionView({
     super.key,
     required this.suggestion,
     required this.onSearchTapped,
+    required this.selectedTagIds,
+    required this.onTagToggled,
   });
 
   @override
@@ -40,10 +45,19 @@ class SearchSuggestionView extends StatelessWidget {
             searches: suggestion.trendingSearches,
             onTap: onSearchTapped,
           ),
+        if (suggestion.tags.isNotEmpty)
+          TagBrowseSection(
+            tags: suggestion.tags,
+            selectedTagIds: selectedTagIds,
+            onTagTapped: onTagToggled,
+          ),
         if (suggestion.trendingSongs.isNotEmpty)
           _TrendingSongsSection(trendingSongs: suggestion.trendingSongs),
         if (suggestion.genres.isNotEmpty)
-          _GenresSection(genres: suggestion.genres, onSearchTapped: onSearchTapped),
+          _GenresSection(
+            genres: suggestion.genres,
+            onSearchTapped: onSearchTapped,
+          ),
       ],
     );
   }
@@ -57,10 +71,7 @@ class _RecentSearchesSection extends StatelessWidget {
   final List<String> searches;
   final ValueChanged<String> onTap;
 
-  const _RecentSearchesSection({
-    required this.searches,
-    required this.onTap,
-  });
+  const _RecentSearchesSection({required this.searches, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -79,14 +90,16 @@ class _RecentSearchesSection extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Recent searches',
-                  style: AppTypography.featureHeading
-                      .copyWith(color: AppColors.white),
+                  style: AppTypography.featureHeading.copyWith(
+                    color: AppColors.white,
+                  ),
                 ),
               ),
               TextButton(
                 key: const Key('searchScreen_clearHistoryButton'),
-                onPressed: () =>
-                    context.read<SearchBloc>().add(const SearchHistoryCleared()),
+                onPressed: () => context.read<SearchBloc>().add(
+                  const SearchHistoryCleared(),
+                ),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
                   minimumSize: Size.zero,
@@ -94,8 +107,9 @@ class _RecentSearchesSection extends StatelessWidget {
                 ),
                 child: Text(
                   'Clear all',
-                  style: AppTypography.caption
-                      .copyWith(color: AppColors.spotifyGreen),
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.spotifyGreen,
+                  ),
                 ),
               ),
             ],
@@ -109,13 +123,20 @@ class _RecentSearchesSection extends StatelessWidget {
               horizontal: AppSpacing.base,
               vertical: AppSpacing.xxs,
             ),
-            leading: const Icon(Icons.history, color: AppColors.silver, size: 20),
+            leading: const Icon(
+              Icons.history,
+              color: AppColors.silver,
+              size: 20,
+            ),
             title: Text(
               query,
               style: AppTypography.body.copyWith(color: AppColors.white),
             ),
-            trailing: const Icon(Icons.north_west,
-                color: AppColors.silver, size: 16),
+            trailing: const Icon(
+              Icons.north_west,
+              color: AppColors.silver,
+              size: 16,
+            ),
           ),
         ),
       ],
@@ -131,10 +152,7 @@ class _TrendingSearchesSection extends StatelessWidget {
   final List<String> searches;
   final ValueChanged<String> onTap;
 
-  const _TrendingSearchesSection({
-    required this.searches,
-    required this.onTap,
-  });
+  const _TrendingSearchesSection({required this.searches, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -150,13 +168,17 @@ class _TrendingSearchesSection extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.trending_up,
-                  color: AppColors.spotifyGreen, size: 18),
+              const Icon(
+                Icons.trending_up,
+                color: AppColors.spotifyGreen,
+                size: 18,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text(
                 'Trending',
-                style: AppTypography.featureHeading
-                    .copyWith(color: AppColors.white),
+                style: AppTypography.featureHeading.copyWith(
+                  color: AppColors.white,
+                ),
               ),
             ],
           ),
@@ -212,6 +234,188 @@ class _SearchChip extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Tags (Browse by Tags)
+// ---------------------------------------------------------------------------
+
+class TagBrowseSection extends StatelessWidget {
+  final List<Tag> tags;
+  final Set<int> selectedTagIds;
+  final ValueChanged<Tag> onTagTapped;
+
+  const TagBrowseSection({
+    super.key,
+    required this.tags,
+    required this.selectedTagIds,
+    required this.onTagTapped,
+  });
+
+  static const List<String> _typeOrder = ['mood', 'activity', 'theme', 'era'];
+
+  @override
+  Widget build(BuildContext context) {
+    final grouped = <String, List<Tag>>{};
+    for (final tag in tags) {
+      grouped.putIfAbsent(tag.type, () => []).add(tag);
+    }
+
+    final orderedEntries = _typeOrder
+        .where(grouped.containsKey)
+        .map((type) => MapEntry(type, grouped[type]!))
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.base,
+            AppSpacing.lg,
+            AppSpacing.base,
+            AppSpacing.xs,
+          ),
+          child: Text(
+            'Browse by tags',
+            style: AppTypography.featureHeading.copyWith(
+              color: AppColors.white,
+            ),
+          ),
+        ),
+        ...orderedEntries.map((entry) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+            child: _TagGroup(
+              title: entry.key.toUpperCase(),
+              tags: entry.value,
+              selectedTagIds: selectedTagIds,
+              onTagTapped: onTagTapped,
+            ),
+          );
+        }),
+        const SizedBox(height: AppSpacing.base),
+      ],
+    );
+  }
+}
+
+class _TagGroup extends StatelessWidget {
+  final String title;
+  final List<Tag> tags;
+  final Set<int> selectedTagIds;
+  final ValueChanged<Tag> onTagTapped;
+
+  const _TagGroup({
+    required this.title,
+    required this.tags,
+    required this.selectedTagIds,
+    required this.onTagTapped,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            top: AppSpacing.xs,
+            bottom: AppSpacing.xs,
+          ),
+          child: Text(
+            title,
+            style: AppTypography.caption.copyWith(color: AppColors.silver),
+          ),
+        ),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
+          children: tags
+              .map(
+                (tag) => _TagChip(
+                  key: Key('searchScreen_tagChip_${tag.id}'),
+                  tag: tag,
+                  isSelected: selectedTagIds.contains(tag.id),
+                  onTap: () => onTagTapped(tag),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  final Tag tag;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TagChip({
+    super.key,
+    required this.tag,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _resolveTagColor(tag);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? color : color.withAlpha(22),
+          borderRadius: BorderRadius.circular(AppRadius.fullPill),
+          border: Border.all(
+            color: color.withAlpha(isSelected ? 255 : 180),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isSelected) ...[
+              const Icon(Icons.check, size: 14, color: AppColors.nearBlack),
+              const SizedBox(width: AppSpacing.xs),
+            ],
+            Text(
+              tag.name,
+              style: AppTypography.caption.copyWith(
+                color: isSelected ? AppColors.nearBlack : color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _resolveTagColor(Tag tag) {
+    final fromHex = _tryParseHex(tag.colorHex);
+    if (fromHex != null) return fromHex;
+
+    return switch (tag.type) {
+      'mood' => const Color(0xFF7F5CFF),
+      'activity' => const Color(0xFFF6A43B),
+      'theme' => const Color(0xFF3CB371),
+      'era' => const Color(0xFFEA6A5E),
+      _ => AppColors.lightBorder,
+    };
+  }
+
+  Color? _tryParseHex(String? hex) {
+    if (hex == null || !hex.startsWith('#') || hex.length != 7) return null;
+    final value = int.tryParse(hex.substring(1), radix: 16);
+    if (value == null) return null;
+    return Color(0xFF000000 | value);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Trending Songs
 // ---------------------------------------------------------------------------
 
@@ -234,8 +438,9 @@ class _TrendingSongsSection extends StatelessWidget {
           ),
           child: Text(
             'Trending songs',
-            style:
-                AppTypography.featureHeading.copyWith(color: AppColors.white),
+            style: AppTypography.featureHeading.copyWith(
+              color: AppColors.white,
+            ),
           ),
         ),
         ...trendingSongs.map((song) {
@@ -243,21 +448,23 @@ class _TrendingSongsSection extends StatelessWidget {
             key: Key('searchScreen_trendingSong_${song.id}'),
             onTap: () {
               final queue = trendingSongs
-                  .map((s) => Song(
-                        id: s.id,
-                        title: s.title,
-                        artistNames:
-                            s.artists.map((a) => a.name as String).toList(),
-                        coverUrl: s.coverUrl,
-                        audioUrl: s.audioUrl,
-                        durationSeconds: s.durationSeconds,
-                      ))
+                  .map(
+                    (s) => Song(
+                      id: s.id,
+                      title: s.title,
+                      artistNames: s.artists
+                          .map((a) => a.name as String)
+                          .toList(),
+                      coverUrl: s.coverUrl,
+                      audioUrl: s.audioUrl,
+                      durationSeconds: s.durationSeconds,
+                    ),
+                  )
                   .toList();
               final idx = trendingSongs.indexOf(song);
-              context.read<PlayerBloc>().add(PlaySongRequested(
-                    songs: queue,
-                    index: idx < 0 ? 0 : idx,
-                  ));
+              context.read<PlayerBloc>().add(
+                PlaySongRequested(songs: queue, index: idx < 0 ? 0 : idx),
+              );
             },
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.base,
@@ -300,7 +507,8 @@ class _SongCover extends StatelessWidget {
             ? Image.network(
                 url,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _Placeholder(),
+                errorBuilder: (context, error, stackTrace) =>
+                    const _Placeholder(),
               )
             : const _Placeholder(),
       ),
@@ -344,8 +552,9 @@ class _GenresSection extends StatelessWidget {
           ),
           child: Text(
             'Explore by genre',
-            style:
-                AppTypography.featureHeading.copyWith(color: AppColors.white),
+            style: AppTypography.featureHeading.copyWith(
+              color: AppColors.white,
+            ),
           ),
         ),
         Padding(
@@ -402,7 +611,7 @@ class _GenreCard extends StatelessWidget {
               Image.network(
                 genre.coverUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
+                errorBuilder: (context, error, stackTrace) =>
                     Container(color: AppColors.midCard),
               )
             else
@@ -428,7 +637,9 @@ class _GenreCard extends StatelessWidget {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   genre.name,
-                  style: AppTypography.bodyBold.copyWith(color: AppColors.white),
+                  style: AppTypography.bodyBold.copyWith(
+                    color: AppColors.white,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

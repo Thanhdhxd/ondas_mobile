@@ -6,6 +6,7 @@ abstract class SongsRemoteDatasource {
     String? artistId,
     String? albumId,
     int? genreId,
+    List<int>? tagIds,
     int page = 0,
     int size = 20,
   });
