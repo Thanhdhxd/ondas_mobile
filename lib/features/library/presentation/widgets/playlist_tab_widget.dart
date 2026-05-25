@@ -48,20 +48,20 @@ class PlaylistTabWidget extends StatelessWidget {
                       color: AppColors.spotifyGreen,
                     ),
                   ),
-                ),
-              )
-            else if (state is LibraryError)
-              SliverFillRemaining(
-                child: _ErrorView(
-                  message: state.message,
-                  onRetry: () => context
-                      .read<LibraryBloc>()
-                      .add(const LibraryRefreshRequested()),
-                ),
-              )
-            else if (state is LibraryLoaded) ...[
-              _MyPlaylistsSection(playlists: state.playlists),
-              _SystemPlaylistsSection(playlists: state.systemPlaylists),
+                )
+              else if (state is LibraryError)
+                SliverFillRemaining(
+                  child: _ErrorView(
+                    message: state.message,
+                    onRetry: () => context
+                        .read<LibraryBloc>()
+                        .add(const LibraryRefreshRequested()),
+                  ),
+                )
+              else if (state is LibraryLoaded) ...[
+                _MyPlaylistsSection(playlists: state.playlists),
+                _SystemPlaylistsSection(playlists: state.systemPlaylists),
+              ],
             ],
           );
         },
