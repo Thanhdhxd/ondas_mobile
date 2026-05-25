@@ -1,6 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:ondas_mobile/core/network/dio_client.dart';
+import 'package:ondas_mobile/core/network/connectivity_service.dart';
 import 'package:ondas_mobile/features/songs/data/datasources/songs_remote_datasource.dart';
 import 'package:ondas_mobile/features/songs/data/datasources/songs_remote_datasource_impl.dart';
 import 'package:ondas_mobile/features/songs/data/repositories/songs_repository_impl.dart';
@@ -70,6 +72,7 @@ import 'package:ondas_mobile/features/playlist/domain/usecases/update_playlist_u
 import 'package:ondas_mobile/features/playlist/domain/usecases/update_playlist_usecase_impl.dart';
 import 'package:ondas_mobile/features/playlist/presentation/bloc/save_to_playlist_bloc.dart';
 import 'package:ondas_mobile/core/network/jwt_interceptor.dart';
+import 'package:ondas_mobile/core/network/network_status_cubit.dart';
 import 'package:ondas_mobile/core/storage/secure_storage.dart';
 import 'package:ondas_mobile/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:ondas_mobile/features/auth/data/datasources/auth_remote_datasource_impl.dart';
@@ -162,6 +165,13 @@ Future<void> setupDependencies() async {
   );
 
   // ── Network ───────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<Connectivity>(() => Connectivity());
+  sl.registerLazySingleton<ConnectivityService>(
+    () => ConnectivityService(sl<Connectivity>()),
+  );
+  sl.registerLazySingleton<NetworkStatusCubit>(
+    () => NetworkStatusCubit(connectivityService: sl<ConnectivityService>()),
+  );
   sl.registerLazySingleton<JwtInterceptor>(
     () => JwtInterceptor(sl<SecureStorage>()),
   );

@@ -27,6 +27,9 @@ dependencies:
   # HTTP client
   dio: ^5.8.0
 
+  # Connectivity
+  connectivity_plus: ^6.0.5
+
   # Secure storage
   flutter_secure_storage: ^9.2.4
 
@@ -42,6 +45,9 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+
+  integration_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0

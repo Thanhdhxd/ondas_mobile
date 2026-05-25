@@ -4,6 +4,7 @@ import 'package:ondas_mobile/core/di/injection.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/core/theme/app_typography.dart';
+import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/home/domain/entities/song_summary.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
@@ -81,44 +82,55 @@ class _SongListViewState extends State<_SongListView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: const Key('songListScreen_scaffold'),
-      backgroundColor: AppColors.nearBlack,
-      appBar: AppBar(
+    return ReconnectListener(
+      shouldReconnect: () =>
+          context.read<SongListBloc>().state is SongListFailure,
+      onReconnect: () => context.read<SongListBloc>().add(SongListStarted(
+            artistId: widget.routeData.artistId,
+            albumId: widget.routeData.albumId,
+            genreId: widget.routeData.genreId,
+          )),
+      child: Scaffold(
+        key: const Key('songListScreen_scaffold'),
         backgroundColor: AppColors.nearBlack,
-        elevation: 0,
-        leading: IconButton(
-          key: const Key('songListScreen_backButton'),
-          icon: const Icon(Icons.arrow_back, color: AppColors.white),
-          onPressed: () => Navigator.of(context).pop(),
+        appBar: AppBar(
+          backgroundColor: AppColors.nearBlack,
+          elevation: 0,
+          leading: IconButton(
+            key: const Key('songListScreen_backButton'),
+            icon: const Icon(Icons.arrow_back, color: AppColors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            widget.routeData.title,
+            style: AppTypography.bodyBold.copyWith(color: AppColors.white),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        title: Text(
-          widget.routeData.title,
-          style: AppTypography.bodyBold.copyWith(color: AppColors.white),
-          overflow: TextOverflow.ellipsis,
+        body: BlocBuilder<SongListBloc, SongListState>(
+          builder: (context, state) => switch (state) {
+            SongListInitial() || SongListLoading() => const _LoadingView(),
+            SongListLoaded(
+              :final songs,
+              hasMore: _,
+            ) =>
+              _SongsList(
+                songs: songs,
+                isLoadingMore: state is SongListLoadingMore,
+                scrollController: _scrollController,
+              ),
+            SongListFailure(:final message) => _ErrorView(
+                message: message,
+                onRetry: () =>
+                    context.read<SongListBloc>().add(SongListStarted(
+                          artistId: widget.routeData.artistId,
+                          albumId: widget.routeData.albumId,
+                          genreId: widget.routeData.genreId,
+                        )),
+              ),
+            _ => const SizedBox.shrink(),
+          },
         ),
-      ),
-      body: BlocBuilder<SongListBloc, SongListState>(
-        builder: (context, state) => switch (state) {
-          SongListInitial() || SongListLoading() => const _LoadingView(),
-          SongListLoaded(
-            :final songs,
-            hasMore: _,
-          ) =>
-            _SongsList(
-              songs: songs,
-              isLoadingMore: state is SongListLoadingMore,
-              scrollController: _scrollController,
-            ),
-          SongListFailure(:final message) => _ErrorView(
-              message: message,
-              onRetry: () => context.read<SongListBloc>().add(SongListStarted(
-                    artistId: widget.routeData.artistId,
-                    albumId: widget.routeData.albumId,
-                  )),
-            ),
-          _ => const SizedBox.shrink(),
-        },
       ),
     );
   }

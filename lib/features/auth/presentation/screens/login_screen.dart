@@ -31,11 +31,11 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       context.read<AuthBloc>().add(
-            LoginSubmitted(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-            ),
-          );
+        LoginSubmitted(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
     }
   }
 
@@ -116,9 +116,16 @@ class _LoginForm extends StatelessWidget {
               if (value == null || value.trim().isEmpty) {
                 return 'Vui lòng nhập email';
               }
-              if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$')
-                  .hasMatch(value.trim())) {
+              if (!RegExp(
+                r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$',
+              ).hasMatch(value.trim())) {
                 return 'Email không hợp lệ';
+              }
+              if (value.trim().length < 6) {
+                return 'Email phải có ít nhất 6 ký tự';
+              }
+              if (value.length > 255) {
+                return 'Email tối đa 255 ký tự';
               }
               return null;
             },
@@ -136,6 +143,10 @@ class _LoginForm extends StatelessWidget {
               }
               if (value.length < 6) {
                 return 'Mật khẩu phải có ít nhất 6 ký tự';
+              }
+              // max length 128
+              if (value.length > 128) {
+                return 'Mật khẩu tối đa 128 ký tự';
               }
               return null;
             },
@@ -184,10 +195,7 @@ class _LoginFooter extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          'Chưa có tài khoản?',
-          style: TextStyle(color: AppColors.silver),
-        ),
+        Text('Chưa có tài khoản?', style: TextStyle(color: AppColors.silver)),
         TextButton(
           key: const Key('loginScreen_goToRegisterButton'),
           onPressed: () => context.push('/register'),

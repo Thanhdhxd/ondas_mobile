@@ -8,6 +8,7 @@ import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_radius.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/core/theme/app_typography.dart';
+import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/home/domain/entities/song_summary.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
@@ -101,6 +102,13 @@ class _SearchViewState extends State<_SearchView> {
     context.read<SearchBloc>().add(const SearchCleared());
   }
 
+  void _retryCurrentSearch() {
+    final query = _controller.text.trim();
+    if (query.isNotEmpty) {
+      context.read<SearchBloc>().add(SearchSubmitted(query));
+    } else {
+      context.read<SearchBloc>().add(const SuggestionsRequested());
+    }
   void _clearTagSelection() {
     _selectedTagIds.clear();
     _selectedTags.clear();
@@ -156,6 +164,13 @@ class _SearchViewState extends State<_SearchView> {
 
   @override
   Widget build(BuildContext context) {
+    return ReconnectListener(
+      shouldReconnect: () => context.read<SearchBloc>().state is SearchFailure,
+      onReconnect: _retryCurrentSearch,
+      child: Scaffold(
+        key: const Key('searchScreen_scaffold'),
+        backgroundColor: AppColors.nearBlack,
+        body: SafeArea(
     return Scaffold(
       key: const Key('searchScreen_scaffold'),
       backgroundColor: AppColors.nearBlack,

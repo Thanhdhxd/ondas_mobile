@@ -7,6 +7,9 @@ import 'package:ondas_mobile/features/home/domain/entities/album_summary.dart';
 import 'package:ondas_mobile/features/home/domain/entities/artist_summary.dart';
 import 'package:ondas_mobile/features/home/domain/entities/song_summary.dart';
 import 'package:ondas_mobile/features/search/domain/entities/search_result.dart';
+import 'package:ondas_mobile/features/search/domain/entities/search_suggestion.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/clear_search_history_usecase.dart';
+import 'package:ondas_mobile/features/search/domain/usecases/get_search_suggestions_usecase.dart';
 import 'package:ondas_mobile/features/search/domain/usecases/search_usecase.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_bloc.dart';
 import 'package:ondas_mobile/features/search/presentation/bloc/search_event.dart';
@@ -14,11 +17,19 @@ import 'package:ondas_mobile/features/search/presentation/bloc/search_state.dart
 
 class MockSearchUseCase extends Mock implements SearchUseCase {}
 
+class MockGetSearchSuggestionsUseCase extends Mock
+    implements GetSearchSuggestionsUseCase {}
+
+class MockClearSearchHistoryUseCase extends Mock
+    implements ClearSearchHistoryUseCase {}
+
 class _FakeSearchParams extends Fake implements SearchParams {}
 
 void main() {
   late SearchBloc bloc;
   late MockSearchUseCase mockUseCase;
+  late MockGetSearchSuggestionsUseCase mockGetSuggestionsUseCase;
+  late MockClearSearchHistoryUseCase mockClearHistoryUseCase;
 
   final tSongs = List.generate(
     3,
@@ -51,6 +62,13 @@ void main() {
     ),
   );
 
+  const tSuggestion = SearchSuggestion(
+    recentSearches: [],
+    trendingSearches: [],
+    trendingSongs: [],
+    genres: [],
+  );
+
   SearchResult _buildResult({int page = 0}) => SearchResult(
         query: 'test',
         page: page,
@@ -69,7 +87,18 @@ void main() {
 
   setUp(() {
     mockUseCase = MockSearchUseCase();
-    bloc = SearchBloc(searchUseCase: mockUseCase);
+    mockGetSuggestionsUseCase = MockGetSearchSuggestionsUseCase();
+    mockClearHistoryUseCase = MockClearSearchHistoryUseCase();
+
+    // Default stub: suggestions always succeed
+    when(() => mockGetSuggestionsUseCase())
+        .thenAnswer((_) async => const Right(tSuggestion));
+
+    bloc = SearchBloc(
+      searchUseCase: mockUseCase,
+      getSuggestionsUseCase: mockGetSuggestionsUseCase,
+      clearHistoryUseCase: mockClearHistoryUseCase,
+    );
   });
 
   tearDown(() => bloc.close());
@@ -109,16 +138,22 @@ void main() {
     );
 
     blocTest<SearchBloc, SearchState>(
-      'emits [SearchInitial] when query is empty after trim',
+      'restores suggestions when query is empty after trim',
       build: () => bloc,
       act: (b) => b.add(const SearchSubmitted('   ')),
-      expect: () => [const SearchInitial()],
+      // When _cachedSuggestion is null the bloc dispatches SuggestionsRequested
+      // internally, which emits SearchSuggestionsLoading then SearchSuggestionsLoaded.
+      expect: () => [
+        const SearchSuggestionsLoading(),
+        isA<SearchSuggestionsLoaded>()
+            .having((s) => s.suggestion, 'suggestion', tSuggestion),
+      ],
     );
   });
 
   group('SearchBloc — SearchCleared', () {
     blocTest<SearchBloc, SearchState>(
-      'emits [SearchInitial] when SearchCleared is added',
+      'restores suggestions when SearchCleared is added',
       build: () => bloc,
       seed: () => SearchLoaded(
         query: 'test',
@@ -132,7 +167,12 @@ void main() {
         hasMore: false,
       ),
       act: (b) => b.add(const SearchCleared()),
-      expect: () => [const SearchInitial()],
+      // _cachedSuggestion is null → bloc dispatches SuggestionsRequested internally.
+      expect: () => [
+        const SearchSuggestionsLoading(),
+        isA<SearchSuggestionsLoaded>()
+            .having((s) => s.suggestion, 'suggestion', tSuggestion),
+      ],
     );
   });
 

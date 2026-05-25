@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
+import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/favorites/domain/entities/favorite_song.dart';
 import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_bloc.dart';
 import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_event.dart';
@@ -19,25 +20,32 @@ class FavoritesListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FavoritesBloc, FavoritesState>(
-      builder: (context, state) => switch (state) {
-        FavoritesInitial() => const SizedBox.shrink(),
-        FavoritesListLoading() => const _LoadingView(),
-        FavoritesListError(:final message) => _ErrorView(
-            message: message,
-            onRetry: () =>
-                context.read<FavoritesBloc>().add(const FavoritesListRequested()),
-          ),
-        FavoritesListLoaded(:final items, :final hasMore, :final currentPage, :final isLoadingMore) =>
-          _FavoritesScrollList(
-            state: FavoritesListLoaded(
-              items: items,
-              hasMore: hasMore,
-              currentPage: currentPage,
-              isLoadingMore: isLoadingMore,
+    return ReconnectListener(
+      shouldReconnect: () =>
+          context.read<FavoritesBloc>().state is FavoritesListError,
+      onReconnect: () =>
+          context.read<FavoritesBloc>().add(const FavoritesListRequested()),
+      child: BlocBuilder<FavoritesBloc, FavoritesState>(
+        builder: (context, state) => switch (state) {
+          FavoritesInitial() => const SizedBox.shrink(),
+          FavoritesListLoading() => const _LoadingView(),
+          FavoritesListError(:final message) => _ErrorView(
+              message: message,
+              onRetry: () => context
+                  .read<FavoritesBloc>()
+                  .add(const FavoritesListRequested()),
             ),
-          ),
-      },
+          FavoritesListLoaded(:final items, :final hasMore, :final currentPage, :final isLoadingMore) =>
+            _FavoritesScrollList(
+              state: FavoritesListLoaded(
+                items: items,
+                hasMore: hasMore,
+                currentPage: currentPage,
+                isLoadingMore: isLoadingMore,
+              ),
+            ),
+        },
+      ),
     );
   }
 }

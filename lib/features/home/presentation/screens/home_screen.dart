@@ -14,6 +14,7 @@ import 'package:ondas_mobile/features/home/presentation/widgets/featured_artist_
 import 'package:ondas_mobile/features/home/presentation/widgets/home_section_widget.dart';
 import 'package:ondas_mobile/features/home/presentation/widgets/new_release_card_widget.dart';
 import 'package:ondas_mobile/features/home/presentation/widgets/trending_song_card_widget.dart';
+import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_event.dart';
@@ -45,24 +46,30 @@ class _HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.nearBlack,
-      body: BlocBuilder<HomeBloc, HomeState>(
-        builder: (context, state) => switch (state) {
-          HomeLoading() => const _LoadingView(),
-          HomeFailure(:final message) => _ErrorView(
-              message: message,
-              onRetry: () => context.read<HomeBloc>().add(const HomeRefreshRequested()),
-            ),
-          HomeLoaded(:final data) => _ContentView(
-              trendingSongs: data.trendingSongs,
-              featuredArtists: data.featuredArtists,
-              newReleases: data.newReleases,
-              onRefresh: () async =>
-                  context.read<HomeBloc>().add(const HomeRefreshRequested()),
-            ),
-          _ => const SizedBox.shrink(),
-        },
+    return ReconnectListener(
+      shouldReconnect: () => context.read<HomeBloc>().state is HomeFailure,
+      onReconnect: () =>
+          context.read<HomeBloc>().add(const HomeRefreshRequested()),
+      child: Scaffold(
+        backgroundColor: AppColors.nearBlack,
+        body: BlocBuilder<HomeBloc, HomeState>(
+          builder: (context, state) => switch (state) {
+            HomeLoading() => const _LoadingView(),
+            HomeFailure(:final message) => _ErrorView(
+                message: message,
+                onRetry: () =>
+                    context.read<HomeBloc>().add(const HomeRefreshRequested()),
+              ),
+            HomeLoaded(:final data) => _ContentView(
+                trendingSongs: data.trendingSongs,
+                featuredArtists: data.featuredArtists,
+                newReleases: data.newReleases,
+                onRefresh: () async =>
+                    context.read<HomeBloc>().add(const HomeRefreshRequested()),
+              ),
+            _ => const SizedBox.shrink(),
+          },
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
+import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/library/presentation/bloc/library_bloc.dart';
 import 'package:ondas_mobile/features/library/presentation/widgets/library_playlist_item_widget.dart';
 import 'package:ondas_mobile/features/library/presentation/widgets/system_playlist_item_widget.dart';
@@ -22,25 +23,30 @@ class PlaylistTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LibraryBloc, LibraryState>(
-      builder: (context, state) {
-        return CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: _CreatePlaylistButton(
-                  isLoading:
-                      state is LibraryLoaded && state.isCreating,
-                  onTap: () => _onCreatePlaylist(context),
+    return ReconnectListener(
+      shouldReconnect: () => context.read<LibraryBloc>().state is LibraryError,
+      onReconnect: () =>
+          context.read<LibraryBloc>().add(const LibraryRefreshRequested()),
+      child: BlocBuilder<LibraryBloc, LibraryState>(
+        builder: (context, state) {
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: _CreatePlaylistButton(
+                    isLoading:
+                        state is LibraryLoaded && state.isCreating,
+                    onTap: () => _onCreatePlaylist(context),
+                  ),
                 ),
               ),
-            ),
-            if (state is LibraryLoading)
-              const SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.spotifyGreen,
+              if (state is LibraryLoading)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.spotifyGreen,
+                    ),
                   ),
                 ),
               )
@@ -57,9 +63,9 @@ class PlaylistTabWidget extends StatelessWidget {
               _MyPlaylistsSection(playlists: state.playlists),
               _SystemPlaylistsSection(playlists: state.systemPlaylists),
             ],
-          ],
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

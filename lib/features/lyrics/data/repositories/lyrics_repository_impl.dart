@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:ondas_mobile/core/error/failures.dart';
+import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/features/lyrics/data/datasources/lyrics_remote_datasource.dart';
 import 'package:ondas_mobile/features/lyrics/domain/entities/lyrics.dart';
 import 'package:ondas_mobile/features/lyrics/domain/repositories/lyrics_repository.dart';
@@ -23,14 +24,9 @@ class LyricsRepositoryImpl implements LyricsRepository {
   }
 
   Failure _mapDioError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == 401) return const UnauthorizedFailure();
-    if (statusCode == 404) {
-      return NotFoundFailure(
-        message: e.response?.data?['message'] ?? 'Lyrics not found',
-      );
-    }
-    final message = e.response?.data?['message'] ?? e.message ?? 'Network error';
-    return ServerFailure(message: message as String, statusCode: statusCode);
+    return DioFailureMapper.map(
+      e,
+      notFoundMessage: 'Lyrics not found',
+    );
   }
 }

@@ -20,4 +20,10 @@ class AppConstants {
   static const String playerNotificationChannelName = 'Ondas Playback';
   static const String playerNotificationChannelDescription =
       'Playback controls for Ondas music';
+
+    // Network
+    static const String offlineBannerMessage = 'Mat ket noi internet';
+    static const String offlineErrorMessage =
+      'Khong the ket noi may chu. Vui long kiem tra mang.';
+    static const String genericErrorMessage = 'Da xay ra loi khong xac dinh.';
 }
