@@ -43,10 +43,12 @@
 
 Mọi API đều trả về cấu trúc `ApiResponse<T>`:
 
+**Lưu ý:** `message` là **code** (xem [error_codes.md](error_codes.md)).
+
 ```json
 {
   "success": true,
-  "message": "OK",
+  "message": "success.ok",
   "data": { ... }
 }
 ```
@@ -55,7 +57,7 @@ Mọi API đều trả về cấu trúc `ApiResponse<T>`:
 ```json
 {
   "success": false,
-  "message": "Song not found with id: ...",
+  "message": "error.not_found.song",
   "data": null
 }
 ```
@@ -64,7 +66,7 @@ Mọi API đều trả về cấu trúc `ApiResponse<T>`:
 ```json
 {
   "success": true,
-  "message": "OK",
+  "message": "success.ok",
   "data": {
     "items": [ ... ],
     "page": 0,
@@ -116,6 +118,8 @@ Mọi API đều trả về cấu trúc `ApiResponse<T>`:
 
 ## Mã lỗi thường gặp
 
+Danh sách code chi tiết: [error_codes.md](error_codes.md)
+
 | HTTP Status | Ý nghĩa |
 |---|---|
 | `400 Bad Request` | Dữ liệu request không hợp lệ (validation error) |
@@ -129,7 +133,7 @@ Mọi API đều trả về cấu trúc `ApiResponse<T>`:
 ```json
 {
   "success": false,
-  "message": "title: Title is required, artistIds: Artist IDs are required",
+  "message": "title: validation.not_blank, artistIds: validation.not_empty",
   "data": null
 }
 ```
@@ -138,7 +142,7 @@ Mọi API đều trả về cấu trúc `ApiResponse<T>`:
 ```json
 {
   "success": false,
-  "message": "Invalid credentials",
+  "message": "error.unauthorized.invalid_credentials",
   "data": null
 }
 ```

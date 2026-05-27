@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:ondas_mobile/core/network/dio_client.dart';
 import 'package:ondas_mobile/core/network/connectivity_service.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
 import 'package:ondas_mobile/features/songs/data/datasources/songs_remote_datasource.dart';
 import 'package:ondas_mobile/features/songs/data/datasources/songs_remote_datasource_impl.dart';
 import 'package:ondas_mobile/features/songs/data/repositories/songs_repository_impl.dart';
@@ -171,6 +172,9 @@ Future<void> setupDependencies() async {
   );
   sl.registerLazySingleton<NetworkStatusCubit>(
     () => NetworkStatusCubit(connectivityService: sl<ConnectivityService>()),
+  );
+  sl.registerLazySingleton<LanguageCubit>(
+    () => LanguageCubit(sl<SecureStorage>()),
   );
   sl.registerLazySingleton<JwtInterceptor>(
     () => JwtInterceptor(sl<SecureStorage>()),

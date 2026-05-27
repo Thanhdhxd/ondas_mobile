@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_bloc.dart';
 import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_event.dart';
@@ -13,6 +16,7 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
     return BlocProvider<LibraryBloc>(
       create: (_) => sl<LibraryBloc>()..add(const LibraryStarted()),
       child: DefaultTabController(
@@ -22,30 +26,30 @@ class LibraryScreen extends StatelessWidget {
           appBar: AppBar(
             backgroundColor: AppColors.nearBlack,
             elevation: 0,
-            title: const Text(
-              'Library',
-              style: TextStyle(
+            title: Text(
+              t(Str.libraryTitle, l),
+              style: const TextStyle(
                 color: AppColors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            bottom: const TabBar(
+            bottom: TabBar(
               labelColor: AppColors.white,
               unselectedLabelColor: AppColors.silver,
               indicatorColor: AppColors.spotifyGreen,
               indicatorWeight: 2.5,
-              labelStyle: TextStyle(
+              labelStyle: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),
-              unselectedLabelStyle: TextStyle(
+              unselectedLabelStyle: const TextStyle(
                 fontWeight: FontWeight.w400,
                 fontSize: 14,
               ),
               tabs: [
-                Tab(key: Key('libraryScreen_favoriteTab'), text: 'Favorite'),
-                Tab(key: Key('libraryScreen_playlistTab'), text: 'Playlist'),
+                Tab(key: const Key('libraryScreen_favoriteTab'), text: t(Str.libraryFavoriteTab, l)),
+                Tab(key: const Key('libraryScreen_playlistTab'), text: t(Str.libraryPlaylistTab, l)),
               ],
             ),
           ),

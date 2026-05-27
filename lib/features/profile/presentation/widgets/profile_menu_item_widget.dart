@@ -7,6 +7,8 @@ class ProfileMenuItemWidget extends StatelessWidget {
   final VoidCallback onTap;
   final Color? iconColor;
   final Color? labelColor;
+  final Widget? trailing;
+  final bool showChevron;
 
   const ProfileMenuItemWidget({
     super.key,
@@ -15,6 +17,8 @@ class ProfileMenuItemWidget extends StatelessWidget {
     required this.onTap,
     this.iconColor,
     this.labelColor,
+    this.trailing,
+    this.showChevron = true,
   });
 
   @override
@@ -23,13 +27,18 @@ class ProfileMenuItemWidget extends StatelessWidget {
     final resolvedIconColor = iconColor ?? AppColors.silver;
     final resolvedLabelColor = labelColor ?? AppColors.white;
 
+    final resolvedTrailing = trailing ??
+        (showChevron
+            ? const Icon(Icons.chevron_right, color: AppColors.silver)
+            : null);
+
     return ListTile(
       leading: Icon(icon, color: resolvedIconColor),
       title: Text(
         label,
         style: textTheme.bodyMedium?.copyWith(color: resolvedLabelColor),
       ),
-      trailing: Icon(Icons.chevron_right, color: AppColors.silver),
+      trailing: resolvedTrailing,
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );

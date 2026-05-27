@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/lyrics/presentation/bloc/lyrics_bloc.dart';
@@ -28,7 +31,11 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  static const _tabs = ['Playing', 'Lyrics', 'Queue'];
+  static const _tabKeys = [
+    Str.playerTabPlaying,
+    Str.playerTabLyrics,
+    Str.playerTabQueue,
+  ];
 
   late final PageController _pageController;
   int _currentPage = 0;
@@ -51,6 +58,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
+    final tabs = _tabKeys.map((key) => t(key, l)).toList();
+    final safeIndex = tabs.isEmpty
+        ? 0
+        : _currentPage.clamp(0, tabs.length - 1).toInt();
+    final currentTitle = tabs.isEmpty ? '' : tabs[safeIndex];
     return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
         return Scaffold(
@@ -61,9 +74,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
               SafeArea(
                 child: Column(
                   children: [
-                    _PlayerAppBar(),
+                    _PlayerAppBar(title: currentTitle),
                     _TabIndicator(
-                      tabs: _tabs,
+                      tabCount: tabs.length,
                       currentIndex: _currentPage,
                       onTap: (i) => _pageController.animateToPage(
                         i,
@@ -73,7 +86,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                     ),
                     Expanded(
                       child: state.status == PlayerStatus.idle
-                          ? const _IdleView()
+                          ? _IdleView(langCode: l)
                           : PageView(
                               controller: _pageController,
                               onPageChanged: _onPageChanged,
@@ -101,55 +114,68 @@ class _PlayerScreenState extends State<PlayerScreen> {
 // ── Tab indicator ─────────────────────────────────────────────────────────────
 
 class _TabIndicator extends StatelessWidget {
-  final List<String> tabs;
+  final int tabCount;
   final int currentIndex;
   final ValueChanged<int> onTap;
 
   const _TabIndicator({
-    required this.tabs,
+    required this.tabCount,
     required this.currentIndex,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (tabCount <= 0) return const SizedBox.shrink();
+    const barHeight = 6.0;
+    const indicatorHeight = 4.0;
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.xl,
+        horizontal: AppSpacing.base,
         vertical: AppSpacing.sm,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(tabs.length, (i) {
-          final isSelected = i == currentIndex;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final fullWidth = constraints.maxWidth;
+          final segmentWidth = fullWidth / tabCount;
+          final safeIndex = currentIndex.clamp(0, tabCount - 1).toInt();
+          final left = segmentWidth * safeIndex;
+
           return GestureDetector(
-            onTap: () => onTap(i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.base,
-                vertical: AppSpacing.xs,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.spotifyGreen.withValues(alpha: 0.15)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                tabs[i],
-                style: TextStyle(
-                  color: isSelected ? AppColors.spotifyGreen : AppColors.silver,
-                  fontWeight:
-                      isSelected ? FontWeight.w700 : FontWeight.w400,
-                  fontSize: 13,
-                  letterSpacing: 0.4,
+            behavior: HitTestBehavior.translucent,
+            onTapDown: (details) {
+              final dx = details.localPosition.dx.clamp(0.0, fullWidth);
+              final tappedIndex = (dx / segmentWidth).floor();
+              onTap(tappedIndex.clamp(0, tabCount - 1));
+            },
+            child: Stack(
+              alignment: Alignment.centerLeft,
+              children: [
+                Container(
+                  height: barHeight,
+                  decoration: BoxDecoration(
+                    color: AppColors.midDark,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
-              ),
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  left: left,
+                  top: (barHeight - indicatorHeight) / 2,
+                  child: Container(
+                    width: segmentWidth,
+                    height: indicatorHeight,
+                    decoration: BoxDecoration(
+                      color: AppColors.spotifyGreen,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
-        }),
+        },
       ),
     );
   }
@@ -190,6 +216,10 @@ class _PlayerBackground extends StatelessWidget {
 // ── App bar ──────────────────────────────────────────────────────────────────
 
 class _PlayerAppBar extends StatelessWidget {
+  final String title;
+
+  const _PlayerAppBar({required this.title});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -207,7 +237,7 @@ class _PlayerAppBar extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'Now Playing',
+              title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.white,
@@ -227,19 +257,21 @@ class _PlayerAppBar extends StatelessWidget {
 // ── Idle state ───────────────────────────────────────────────────────────────
 
 class _IdleView extends StatelessWidget {
-  const _IdleView();
+  final String langCode;
+
+  const _IdleView({required this.langCode});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.music_off_rounded, size: 64, color: AppColors.silver),
-          SizedBox(height: AppSpacing.base),
+          const Icon(Icons.music_off_rounded, size: 64, color: AppColors.silver),
+          const SizedBox(height: AppSpacing.base),
           Text(
-            'No song playing',
-            style: TextStyle(color: AppColors.silver, fontSize: 16),
+            t(Str.playerNoSongPlaying, langCode),
+            style: const TextStyle(color: AppColors.silver, fontSize: 16),
           ),
         ],
       ),

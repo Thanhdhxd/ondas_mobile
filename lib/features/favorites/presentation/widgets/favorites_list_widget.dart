@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
@@ -20,6 +23,7 @@ class FavoritesListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
     return ReconnectListener(
       shouldReconnect: () =>
           context.read<FavoritesBloc>().state is FavoritesListError,
@@ -31,6 +35,7 @@ class FavoritesListWidget extends StatelessWidget {
           FavoritesListLoading() => const _LoadingView(),
           FavoritesListError(:final message) => _ErrorView(
               message: message,
+              langCode: l,
               onRetry: () => context
                   .read<FavoritesBloc>()
                   .add(const FavoritesListRequested()),
@@ -43,6 +48,7 @@ class FavoritesListWidget extends StatelessWidget {
                 currentPage: currentPage,
                 isLoadingMore: isLoadingMore,
               ),
+              langCode: l,
             ),
         },
       ),
@@ -67,9 +73,14 @@ class _LoadingView extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final String message;
+  final String langCode;
   final VoidCallback onRetry;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.langCode,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +94,7 @@ class _ErrorView extends StatelessWidget {
                 size: 48, color: AppColors.negativeRed),
             const SizedBox(height: AppSpacing.base),
             Text(
-              'Không thể tải danh sách yêu thích',
+              t(Str.favoritesLoadError, langCode),
               style: Theme.of(context)
                   .textTheme
                   .bodyLarge
@@ -93,7 +104,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: AppSpacing.xl),
             ElevatedButton(
               onPressed: onRetry,
-              child: const Text('Thử lại'),
+              child: Text(t(Str.retry, langCode)),
             ),
           ],
         ),
@@ -106,8 +117,12 @@ class _ErrorView extends StatelessWidget {
 
 class _FavoritesScrollList extends StatefulWidget {
   final FavoritesListLoaded state;
+  final String langCode;
 
-  const _FavoritesScrollList({required this.state});
+  const _FavoritesScrollList({
+    required this.state,
+    required this.langCode,
+  });
 
   @override
   State<_FavoritesScrollList> createState() => _FavoritesScrollListState();
@@ -140,7 +155,7 @@ class _FavoritesScrollListState extends State<_FavoritesScrollList> {
     final state = widget.state;
 
     if (state.items.isEmpty) {
-      return const _EmptyView();
+      return _EmptyView(langCode: widget.langCode);
     }
 
     return RefreshIndicator(
@@ -218,7 +233,8 @@ class _DismissibleFavoriteItem extends StatelessWidget {
 // ── Empty ─────────────────────────────────────────────────────────────────────
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView();
+  final String langCode;
+  const _EmptyView({required this.langCode});
 
   @override
   Widget build(BuildContext context) {
@@ -233,7 +249,7 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.base),
           Text(
-            'Chưa có bài hát yêu thích',
+            t(Str.favoritesEmptyTitle, langCode),
             style: Theme.of(context)
                 .textTheme
                 .bodyLarge
@@ -241,7 +257,7 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Nhấn biểu tượng ♥ để thêm bài hát',
+            t(Str.favoritesEmptySubtitle, langCode),
             style: Theme.of(context)
                 .textTheme
                 .bodySmall

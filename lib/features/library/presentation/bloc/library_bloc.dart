@@ -1,7 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:ondas_mobile/core/network/dio_failure_mapper.dart';
 import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 import 'package:ondas_mobile/features/playlist/domain/usecases/create_playlist_usecase.dart';
 import 'package:ondas_mobile/features/playlist/domain/usecases/delete_playlist_usecase.dart';

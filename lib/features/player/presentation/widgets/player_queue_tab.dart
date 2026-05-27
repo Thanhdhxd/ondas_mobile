@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
@@ -13,10 +16,11 @@ class PlayerQueueTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
     return BlocBuilder<PlayerBloc, PlayerState>(
       builder: (context, state) {
         if (state.queue.isEmpty) {
-          return const _EmptyQueue();
+          return _EmptyQueue(langCode: l);
         }
         return _QueueList(
           queue: state.queue,
@@ -30,19 +34,21 @@ class PlayerQueueTab extends StatelessWidget {
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 class _EmptyQueue extends StatelessWidget {
-  const _EmptyQueue();
+  final String langCode;
+
+  const _EmptyQueue({required this.langCode});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.queue_music_rounded, size: 64, color: AppColors.silver),
-          SizedBox(height: AppSpacing.base),
+          const Icon(Icons.queue_music_rounded, size: 64, color: AppColors.silver),
+          const SizedBox(height: AppSpacing.base),
           Text(
-            'Queue is empty',
-            style: TextStyle(
+            t(Str.playerQueueEmpty, langCode),
+            style: const TextStyle(
               color: AppColors.silver,
               fontSize: 16,
               fontWeight: FontWeight.w500,

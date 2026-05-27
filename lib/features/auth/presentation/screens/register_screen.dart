@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/auth_bloc.dart';
@@ -77,7 +79,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onSubmit: _submit,
                 ),
                 const SizedBox(height: AppSpacing.xl),
-                _RegisterFooter(),
+                const _RegisterFooter(),
               ],
             ),
           ),
@@ -90,6 +92,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 class _RegisterHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Column(
       children: [
         const Icon(
@@ -99,7 +102,7 @@ class _RegisterHeader extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.base),
         Text(
-          'Tạo tài khoản Ondas',
+          t(Str.registerTitle, l),
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: AppColors.white,
                 fontWeight: FontWeight.w700,
@@ -108,7 +111,7 @@ class _RegisterHeader extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Miễn phí. Không giới hạn.',
+          t(Str.registerSubtitle, l),
           style: TextStyle(color: AppColors.silver),
           textAlign: TextAlign.center,
         ),
@@ -136,6 +139,7 @@ class _RegisterForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Form(
       key: formKey,
       child: Column(
@@ -143,16 +147,16 @@ class _RegisterForm extends StatelessWidget {
         children: [
           AuthTextFieldWidget(
             fieldKey: const Key('registerScreen_fullNameField'),
-            label: 'Họ và tên',
-            hint: 'Nguyễn Văn A',
+            label: t(Str.registerFullName, l),
+            hint: t(Str.registerFullNameHint, l),
             controller: fullNameController,
             keyboardType: TextInputType.name,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Vui lòng nhập họ và tên';
+                return t(Str.registerFullNameRequired, l);
               }
               if (value.trim().length < 2) {
-                return 'Họ và tên phải có ít nhất 2 ký tự';
+                return t(Str.registerFullNameTooShort, l);
               }
               return null;
             },
@@ -160,17 +164,17 @@ class _RegisterForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('registerScreen_emailField'),
-            label: 'Email',
-            hint: 'email@example.com',
+            label: t(Str.loginEmail, l),
+            hint: t(Str.loginEmailHint, l),
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Vui lòng nhập email';
+                return t(Str.registerEmailRequired, l);
               }
               if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$')
                   .hasMatch(value.trim())) {
-                return 'Email không hợp lệ';
+                return t(Str.registerEmailInvalid, l);
               }
               return null;
             },
@@ -178,16 +182,16 @@ class _RegisterForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('registerScreen_passwordField'),
-            label: 'Mật khẩu',
+            label: t(Str.loginPassword, l),
             hint: '••••••••',
             controller: passwordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Vui lòng nhập mật khẩu';
+                return t(Str.registerPasswordRequired, l);
               }
               if (value.length < 6) {
-                return 'Mật khẩu phải có ít nhất 6 ký tự';
+                return t(Str.registerPasswordTooShort, l);
               }
               return null;
             },
@@ -195,16 +199,16 @@ class _RegisterForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('registerScreen_confirmPasswordField'),
-            label: 'Xác nhận mật khẩu',
+            label: t(Str.registerConfirmPassword, l),
             hint: '••••••••',
             controller: confirmPasswordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Vui lòng xác nhận mật khẩu';
+                return t(Str.registerConfirmPasswordRequired, l);
               }
               if (value != passwordController.text) {
-                return 'Mật khẩu không khớp';
+                return t(Str.registerPasswordMismatch, l);
               }
               return null;
             },
@@ -225,7 +229,7 @@ class _RegisterForm extends StatelessWidget {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('TẠO TÀI KHOẢN'),
+                    : Text(t(Str.registerButton, lang(context))),
               );
             },
           ),
@@ -236,21 +240,24 @@ class _RegisterForm extends StatelessWidget {
 }
 
 class _RegisterFooter extends StatelessWidget {
+  const _RegisterFooter();
+
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Đã có tài khoản?',
+          t(Str.registerHasAccount, l),
           style: TextStyle(color: AppColors.silver),
         ),
         TextButton(
           key: const Key('registerScreen_goToLoginButton'),
           onPressed: () => context.pop(),
-          child: const Text(
-            'Đăng nhập',
-            style: TextStyle(
+          child: Text(
+            t(Str.registerGoLogin, l),
+            style: const TextStyle(
               color: AppColors.spotifyGreen,
               fontWeight: FontWeight.w700,
             ),

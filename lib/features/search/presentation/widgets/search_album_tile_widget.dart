@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_radius.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
@@ -17,6 +19,7 @@ class SearchAlbumTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(
@@ -31,7 +34,7 @@ class SearchAlbumTileWidget extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        album.albumType ?? 'Album',
+        album.albumType ?? t(Str.searchAlbumLabel, l),
         style: AppTypography.caption.copyWith(color: AppColors.silver),
       ),
     );
