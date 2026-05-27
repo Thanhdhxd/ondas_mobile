@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/core/theme/app_typography.dart';
@@ -16,6 +18,7 @@ class SearchArtistTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(
@@ -30,7 +33,7 @@ class SearchArtistTileWidget extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       subtitle: Text(
-        'Artist',
+        t(Str.searchArtistLabel, l),
         style: AppTypography.caption.copyWith(color: AppColors.silver),
       ),
     );

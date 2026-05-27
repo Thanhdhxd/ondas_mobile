@@ -27,6 +27,14 @@ class SecureStorage {
     await _storage.delete(key: AppConstants.refreshTokenKey);
   }
 
+  Future<void> saveLanguageCode(String langCode) async {
+    await _storage.write(key: AppConstants.languageCodeKey, value: langCode);
+  }
+
+  Future<String?> getLanguageCode() async {
+    return _storage.read(key: AppConstants.languageCodeKey);
+  }
+
   Future<void> clearAll() async {
     await _storage.deleteAll();
   }

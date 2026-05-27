@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/home/domain/entities/album_summary.dart';
@@ -109,7 +111,7 @@ class _ErrorView extends StatelessWidget {
           TextButton(
             key: const Key('homeScreen_retryButton'),
             onPressed: onRetry,
-            child: const Text('Retry', style: TextStyle(color: AppColors.spotifyGreen)),
+            child: Text(t(Str.retry, lang(context)), style: const TextStyle(color: AppColors.spotifyGreen)),
           ),
         ],
       ),
@@ -147,21 +149,21 @@ class _ContentView extends StatelessWidget {
                 children: [
                   if (trendingSongs.isNotEmpty) ...[
                     HomeSectionWidget(
-                      title: 'Trending',
+                      title: t(Str.homeScreenTrending, lang(context)),
                       child: _TrendingSongsList(songs: trendingSongs),
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                   if (featuredArtists.isNotEmpty) ...[
                     HomeSectionWidget(
-                      title: 'Featured Artists',
+                      title: t(Str.homeScreenFeaturedArtists, lang(context)),
                       child: _FeaturedArtistsList(artists: featuredArtists),
                     ),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                   if (newReleases.isNotEmpty) ...[
                     HomeSectionWidget(
-                      title: 'New Releases',
+                      title: t(Str.homeScreenNewReleases, lang(context)),
                       child: _NewReleasesList(albums: newReleases),
                     ),
                     const SizedBox(height: AppSpacing.xxl),

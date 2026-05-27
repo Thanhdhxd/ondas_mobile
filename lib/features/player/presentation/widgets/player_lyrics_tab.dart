@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/lyrics/domain/entities/lyrics.dart';
@@ -9,10 +12,6 @@ import 'package:ondas_mobile/features/lyrics/presentation/bloc/lyrics_state.dart
 import 'package:ondas_mobile/features/player/presentation/bloc/player_bloc.dart';
 import 'package:ondas_mobile/features/player/presentation/bloc/player_state.dart';
 
-const _emptyTitle = 'Lyrics not available';
-const _emptySubtitle = 'Lyrics will appear here';
-const _loadingText = 'Loading lyrics...';
-const _errorTitle = 'Unable to load lyrics';
 const _syncedFocusAlignment = 0.42;
 const _syncedPaddingFactor = 0.45;
 
@@ -42,6 +41,7 @@ class _PlayerLyricsTabState extends State<PlayerLyricsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
     return BlocListener<PlayerBloc, PlayerState>(
       listenWhen: (prev, curr) => prev.currentSong?.id != curr.currentSong?.id,
       listener: (context, state) {
@@ -56,11 +56,17 @@ class _PlayerLyricsTabState extends State<PlayerLyricsTab> {
       child: BlocBuilder<LyricsBloc, LyricsState>(
         builder: (context, state) {
           return switch (state) {
-            LyricsLoading() => const _LoadingView(),
-            LyricsNotFound() => const _EmptyView(),
-            LyricsFailure(:final message) => _ErrorView(message: message),
-            LyricsLoaded(:final lyrics) => _LyricsContent(lyrics: lyrics),
-            _ => const _EmptyView(),
+            LyricsLoading() => _LoadingView(langCode: l),
+            LyricsNotFound() => _EmptyView(langCode: l),
+            LyricsFailure(:final message) => _ErrorView(
+                message: message,
+                langCode: l,
+              ),
+            LyricsLoaded(:final lyrics) => _LyricsContent(
+                lyrics: lyrics,
+                langCode: l,
+              ),
+            _ => _EmptyView(langCode: l),
           };
         },
       ),
@@ -70,28 +76,31 @@ class _PlayerLyricsTabState extends State<PlayerLyricsTab> {
 
 class _LyricsContent extends StatelessWidget {
   final Lyrics lyrics;
+  final String langCode;
 
-  const _LyricsContent({required this.lyrics});
+  const _LyricsContent({required this.lyrics, required this.langCode});
 
   @override
   Widget build(BuildContext context) {
     if (lyrics.hasSynced) {
       if (lyrics.syncedLines.isEmpty) {
-        return const _EmptyView();
+        return _EmptyView(langCode: langCode);
       }
       return _SyncedLyricsView(lines: lyrics.syncedLines);
     }
 
     final text = lyrics.plainText?.trim();
     if (text == null || text.isEmpty) {
-      return const _EmptyView();
+      return _EmptyView(langCode: langCode);
     }
     return _PlainLyricsView(text: text);
   }
 }
 
 class _LoadingView extends StatelessWidget {
-  const _LoadingView();
+  final String langCode;
+
+  const _LoadingView({required this.langCode});
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +111,7 @@ class _LoadingView extends StatelessWidget {
           const CircularProgressIndicator(color: AppColors.spotifyGreen),
           const SizedBox(height: AppSpacing.base),
           Text(
-            _loadingText,
+            t(Str.playerLyricsLoading, langCode),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.silver,
                 ),
@@ -114,7 +123,9 @@ class _LoadingView extends StatelessWidget {
 }
 
 class _EmptyView extends StatelessWidget {
-  const _EmptyView();
+  final String langCode;
+
+  const _EmptyView({required this.langCode});
 
   @override
   Widget build(BuildContext context) {
@@ -132,9 +143,9 @@ class _EmptyView extends StatelessWidget {
         children: [
           const Icon(Icons.lyrics_outlined, size: 64, color: AppColors.silver),
           const SizedBox(height: AppSpacing.base),
-          Text(_emptyTitle, style: titleStyle),
+          Text(t(Str.playerLyricsEmptyTitle, langCode), style: titleStyle),
           const SizedBox(height: AppSpacing.sm),
-          Text(_emptySubtitle, style: subtitleStyle),
+          Text(t(Str.playerLyricsEmptySubtitle, langCode), style: subtitleStyle),
         ],
       ),
     );
@@ -143,8 +154,9 @@ class _EmptyView extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final String message;
+  final String langCode;
 
-  const _ErrorView({required this.message});
+  const _ErrorView({required this.message, required this.langCode});
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +176,11 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 48, color: AppColors.silver),
             const SizedBox(height: AppSpacing.base),
-            Text(_errorTitle, style: titleStyle, textAlign: TextAlign.center),
+            Text(
+              t(Str.playerLyricsError, langCode),
+              style: titleStyle,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpacing.sm),
             Text(message, style: subtitleStyle, textAlign: TextAlign.center),
           ],

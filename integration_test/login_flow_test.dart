@@ -56,7 +56,6 @@ const _emailInvalidMessage = 'Email không hợp lệ';
 const _passwordTooShortMessage = 'Mật khẩu phải có ít nhất 6 ký tự';
 const _passwordTooLongMessage = 'Mật khẩu tối đa 128 ký tự';
 const _emailTooLongMessage = 'Email tối đa 255 ký tự';
-const _emailTooShortMessage = 'Email phải có ít nhất 6 ký tự';
 
 // ---------------------------------------------------------------------------
 // Widget keys

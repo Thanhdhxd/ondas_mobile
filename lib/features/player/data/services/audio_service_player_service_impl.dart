@@ -238,6 +238,7 @@ class OndasAudioHandler extends BaseAudioHandler
 
   List<Song> _queue = [];
   int _currentIndex = 0;
+  //ignore: unused_field
   RepeatMode _repeatMode = RepeatMode.off;
   MediaItem? _currentMediaItem;
 

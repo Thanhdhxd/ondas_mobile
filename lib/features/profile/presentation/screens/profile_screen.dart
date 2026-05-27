@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
@@ -25,17 +28,17 @@ class ProfileScreen extends StatelessWidget {
           context.go('/login');
         } else if (state is ProfileUpdateSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile updated successfully')),
+            SnackBar(content: Text(t(Str.profileUpdateSuccess, lang(context)))),
           );
           context.read<ProfileBloc>().add(const ProfileLoadRequested());
         } else if (state is ProfileAvatarUploadSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Avatar updated successfully')),
+            SnackBar(content: Text(t(Str.profileAvatarSuccess, lang(context)))),
           );
           context.read<ProfileBloc>().add(const ProfileLoadRequested());
         } else if (state is ProfilePasswordChangeSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Password changed successfully')),
+            SnackBar(content: Text(t(Str.profilePasswordSuccess, lang(context)))),
           );
           context.read<ProfileBloc>().add(const ProfileLoadRequested());
         } else if (state is ProfileFailure) {
@@ -45,6 +48,7 @@ class ProfileScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final l = context.watch<LanguageCubit>().state;
         return ReconnectListener(
           shouldReconnect: () =>
               context.read<ProfileBloc>().state is ProfileFailure,
@@ -52,23 +56,24 @@ class ProfileScreen extends StatelessWidget {
               context.read<ProfileBloc>().add(const ProfileLoadRequested()),
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Profile'),
+              title: Text(t(Str.profileTitle, l)),
               backgroundColor: AppColors.nearBlack,
             ),
             body: switch (state) {
               ProfileLoading() => const _LoadingView(),
               ProfileLoaded(:final userProfile) =>
-                _ContentView(userProfile: userProfile),
+                _ContentView(userProfile: userProfile, langCode: l),
               ProfileUpdateSuccess(:final userProfile) =>
-                _ContentView(userProfile: userProfile),
+                _ContentView(userProfile: userProfile, langCode: l),
               ProfileAvatarUploadSuccess(:final userProfile) =>
-                _ContentView(userProfile: userProfile),
+                _ContentView(userProfile: userProfile, langCode: l),
               ProfileFailure(:final message) => _ErrorView(
-                  message: message,
-                  onRetry: () => context
-                      .read<ProfileBloc>()
-                      .add(const ProfileLoadRequested()),
-                ),
+                message: message,
+                langCode: l,
+                onRetry: () => context
+                    .read<ProfileBloc>()
+                    .add(const ProfileLoadRequested()),
+              ),
               _ => const _LoadingView(),
             },
           ),
@@ -89,9 +94,14 @@ class _LoadingView extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final String message;
+  final String langCode;
   final VoidCallback onRetry;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.langCode,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -103,7 +113,7 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           ElevatedButton(
             onPressed: onRetry,
-            child: const Text('Retry'),
+            child: Text(t(Str.retry, langCode)),
           ),
         ],
       ),
@@ -113,8 +123,9 @@ class _ErrorView extends StatelessWidget {
 
 class _ContentView extends StatelessWidget {
   final UserProfile userProfile;
+  final String langCode;
 
-  const _ContentView({required this.userProfile});
+  const _ContentView({required this.userProfile, required this.langCode});
 
   void _showEditProfileDialog(BuildContext context, ProfileBloc bloc) {
     showDialog<void>(
@@ -162,15 +173,21 @@ class _ContentView extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: const Text('Log Out', style: TextStyle(color: AppColors.white)),
-        content: const Text(
-          'Are you sure you want to log out?',
-          style: TextStyle(color: AppColors.silver),
+        title: Text(
+          t(Str.profileLogoutTitle, langCode),
+          style: const TextStyle(color: AppColors.white),
+        ),
+        content: Text(
+          t(Str.profileLogoutConfirm, langCode),
+          style: const TextStyle(color: AppColors.silver),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.silver)),
+            child: Text(
+              t(Str.cancel, langCode),
+              style: const TextStyle(color: AppColors.silver),
+            ),
           ),
           ElevatedButton(
             key: const Key('logoutConfirmDialog_confirmButton'),
@@ -179,16 +196,77 @@ class _ContentView extends StatelessWidget {
               Navigator.of(dialogContext).pop();
               bloc.add(const ProfileLogoutRequested());
             },
-            child: const Text('Log Out'),
+            child: Text(t(Str.profileLogoutButton, langCode)),
           ),
         ],
       ),
     );
   }
 
+  void _showLanguageSheet(BuildContext context, String currentLang) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.darkSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        final textTheme = Theme.of(sheetContext).textTheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.midDark,
+                    borderRadius: BorderRadius.circular(9999),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  t(Str.profileLanguage, currentLang),
+                  style: textTheme.titleMedium?.copyWith(color: AppColors.white),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                _LanguageOptionTile(
+                  key: const Key('profileLanguageSheet_vi'),
+                  label: t(Str.languageVietnamese, currentLang),
+                  selected: currentLang == 'vi',
+                  onTap: () {
+                    sheetContext.read<LanguageCubit>().setLanguage('vi');
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+                _LanguageOptionTile(
+                  key: const Key('profileLanguageSheet_en'),
+                  label: t(Str.languageEnglish, currentLang),
+                  selected: currentLang == 'en',
+                  onTap: () {
+                    sheetContext.read<LanguageCubit>().setLanguage('en');
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<ProfileBloc>();
+    final l = langCode;
+    final textTheme = Theme.of(context).textTheme;
+    final languageName = l == 'vi'
+        ? t(Str.languageVietnamese, l)
+        : t(Str.languageEnglish, l);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
@@ -200,33 +278,51 @@ class _ContentView extends StatelessWidget {
             onAvatarTap: () => _pickAndUploadAvatar(context, bloc),
           ),
           const SizedBox(height: AppSpacing.xl),
-          _SectionDivider(title: 'Account'),
+          _SectionDivider(title: t(Str.profileSectionAccount, l)),
           ProfileMenuItemWidget(
             key: const Key('profileScreen_editButton'),
             icon: Icons.edit_outlined,
-            label: 'Edit Profile',
+            label: t(Str.profileEditButton, l),
             onTap: () => _showEditProfileDialog(context, bloc),
           ),
           ProfileMenuItemWidget(
             key: const Key('profileScreen_changePasswordButton'),
             icon: Icons.lock_outline,
-            label: 'Change Password',
+            label: t(Str.profileChangePassword, l),
             onTap: () => _showChangePasswordDialog(context, bloc),
           ),
+          ProfileMenuItemWidget(
+            key: const Key('profileScreen_languageButton'),
+            icon: Icons.language,
+            label: t(Str.profileLanguage, l),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  languageName,
+                  style: textTheme.bodyMedium?.copyWith(color: AppColors.silver),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                const Icon(Icons.expand_more, color: AppColors.silver),
+              ],
+            ),
+            showChevron: false,
+            onTap: () => _showLanguageSheet(context, l),
+          ),
           const SizedBox(height: AppSpacing.md),
-          _SectionDivider(title: 'Activity'),
+          _SectionDivider(title: t(Str.profileSectionActivity, l)),
           ProfileMenuItemWidget(
             key: const Key('profileScreen_historyButton'),
             icon: Icons.history,
-            label: 'Listening History',
+            label: t(Str.profileListeningHistory, l),
             onTap: () => context.push('/history'),
           ),
           const SizedBox(height: AppSpacing.md),
-          _SectionDivider(title: 'Session'),
+          _SectionDivider(title: t(Str.profileSectionSession, l)),
           ProfileMenuItemWidget(
             key: const Key('profileScreen_logoutButton'),
             icon: Icons.logout,
-            label: 'Log Out',
+            label: t(Str.profileLogout, l),
             iconColor: AppColors.negativeRed,
             labelColor: AppColors.negativeRed,
             onTap: () => _confirmLogout(context, bloc),
@@ -256,6 +352,36 @@ class _SectionDivider extends StatelessWidget {
               letterSpacing: 1.4,
             ),
       ),
+    );
+  }
+}
+
+class _LanguageOptionTile extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _LanguageOptionTile({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(
+        selected ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: selected ? AppColors.announcementBlue : AppColors.silver,
+      ),
+      title: Text(
+        label,
+        style: textTheme.bodyLarge?.copyWith(color: AppColors.white),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
     );
   }
 }

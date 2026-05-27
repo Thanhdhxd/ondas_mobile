@@ -11,6 +11,7 @@ class AppConstants {
   // Storage keys
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
+  static const String languageCodeKey = 'language_code';
 
   // Token
   static const String bearerPrefix = 'Bearer ';

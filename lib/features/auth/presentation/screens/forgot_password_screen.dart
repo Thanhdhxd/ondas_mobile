@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/forgot_password_bloc.dart';
@@ -66,7 +68,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const OndasLogoWidget(subtitle: 'Quên mật khẩu'),
+                    OndasLogoWidget(subtitle: t(Str.forgotPasswordSubtitle, lang(context))),
                     const SizedBox(height: AppSpacing.xl),
                     const _ForgotPasswordDescription(),
                     const SizedBox(height: AppSpacing.xxl),
@@ -76,7 +78,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       onSubmit: _submit,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    _ForgotPasswordFooter(),
+                    const _ForgotPasswordFooter(),
                   ],
                 ),
               ),
@@ -94,7 +96,7 @@ class _ForgotPasswordDescription extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Nhập email đã đăng ký, chúng tôi sẽ gửi mã OTP để đặt lại mật khẩu.',
+      t(Str.forgotPasswordDescription, lang(context)),
       style: TextStyle(color: AppColors.silver, fontSize: 14, height: 1.5),
       textAlign: TextAlign.center,
     );
@@ -114,6 +116,7 @@ class _ForgotPasswordForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Form(
       key: formKey,
       child: Column(
@@ -121,17 +124,17 @@ class _ForgotPasswordForm extends StatelessWidget {
         children: [
           AuthTextFieldWidget(
             fieldKey: const Key('forgotPasswordScreen_emailField'),
-            label: 'Email',
-            hint: 'email@example.com',
+            label: t(Str.loginEmail, l),
+            hint: t(Str.loginEmailHint, l),
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Vui lòng nhập email';
+                return t(Str.forgotPasswordEmailRequired, l);
               }
               if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$')
                   .hasMatch(value.trim())) {
-                return 'Email không hợp lệ';
+                return t(Str.forgotPasswordEmailInvalid, l);
               }
               return null;
             },
@@ -152,7 +155,7 @@ class _ForgotPasswordForm extends StatelessWidget {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('GỬI MÃ OTP'),
+                    : Text(t(Str.forgotPasswordSendOtp, lang(context))),
               );
             },
           ),
@@ -163,21 +166,24 @@ class _ForgotPasswordForm extends StatelessWidget {
 }
 
 class _ForgotPasswordFooter extends StatelessWidget {
+  const _ForgotPasswordFooter();
+
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          'Đã nhớ mật khẩu?',
+          t(Str.forgotPasswordRemembered, l),
           style: TextStyle(color: AppColors.silver),
         ),
         TextButton(
           key: const Key('forgotPasswordScreen_goToLoginButton'),
           onPressed: () => context.go('/login'),
-          child: const Text(
-            'Đăng nhập',
-            style: TextStyle(
+          child: Text(
+            t(Str.forgotPasswordGoLogin, l),
+            style: const TextStyle(
               color: AppColors.spotifyGreen,
               fontWeight: FontWeight.w700,
             ),

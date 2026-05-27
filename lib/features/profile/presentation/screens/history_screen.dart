@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
@@ -45,25 +47,26 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _showClearConfirmation(BuildContext context) {
+    final l = lang(context);
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: const Text(
-          'Clear all history?',
-          style: TextStyle(color: AppColors.white),
+        title: Text(
+          t(Str.historyClearTitle, l),
+          style: const TextStyle(color: AppColors.white),
         ),
-        content: const Text(
-          'This action cannot be undone.',
-          style: TextStyle(color: AppColors.silver),
+        content: Text(
+          t(Str.historyClearConfirm, l),
+          style: const TextStyle(color: AppColors.silver),
         ),
         actions: [
           TextButton(
             key: const Key('historyScreen_cancelClearButton'),
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.silver),
+            child: Text(
+              t(Str.cancel, l),
+              style: const TextStyle(color: AppColors.silver),
             ),
           ),
           TextButton(
@@ -72,9 +75,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Navigator.of(dialogContext).pop();
               context.read<HistoryBloc>().add(const HistoryClearRequested());
             },
-            child: const Text(
-              'Clear All',
-              style: TextStyle(color: AppColors.negativeRed),
+            child: Text(
+              t(Str.historyClearButton, l),
+              style: const TextStyle(color: AppColors.negativeRed),
             ),
           ),
         ],
@@ -93,7 +96,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         backgroundColor: AppColors.nearBlack,
         appBar: AppBar(
           key: const Key('historyScreen_appBar'),
-          title: const Text('Listening History'),
+          title: Text(t(Str.historyTitle, lang(context))),
           backgroundColor: AppColors.nearBlack,
           actions: [
             BlocBuilder<HistoryBloc, HistoryState>(
@@ -104,7 +107,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 return IconButton(
                   key: const Key('historyScreen_clearButton'),
                   icon: const Icon(Icons.delete_sweep_outlined),
-                  tooltip: 'Clear All',
+                  tooltip: t(Str.historyClearAll, lang(context)),
                   onPressed: () => _showClearConfirmation(context),
                 );
               },
@@ -123,7 +126,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             } else if (state is HistoryClearSuccess) {
               context.read<HistoryBloc>().add(const HistoryLoadRequested());
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('History cleared')),
+                SnackBar(content: Text(t(Str.historyCleared, lang(context)))),
               );
             }
           },
@@ -184,7 +187,7 @@ class _EmptyView extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.base),
           Text(
-            'No listening history yet',
+            t(Str.historyEmpty, lang(context)),
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -222,7 +225,7 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton(
               key: const Key('historyScreen_retryButton'),
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: Text(t(Str.retry, lang(context))),
             ),
           ],
         ),

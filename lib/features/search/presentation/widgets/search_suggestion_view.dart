@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/constants/api_constants.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_radius.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
@@ -20,6 +22,7 @@ class SearchSuggestionView extends StatelessWidget {
   final ValueChanged<String> onSearchTapped;
   final Set<int> selectedTagIds;
   final ValueChanged<Tag> onTagToggled;
+  final String langCode;
 
   const SearchSuggestionView({
     super.key,
@@ -27,6 +30,7 @@ class SearchSuggestionView extends StatelessWidget {
     required this.onSearchTapped,
     required this.selectedTagIds,
     required this.onTagToggled,
+    required this.langCode,
   });
 
   @override
@@ -39,24 +43,31 @@ class SearchSuggestionView extends StatelessWidget {
           _RecentSearchesSection(
             searches: suggestion.recentSearches,
             onTap: onSearchTapped,
+            langCode: langCode,
           ),
         if (suggestion.trendingSearches.isNotEmpty)
           _TrendingSearchesSection(
             searches: suggestion.trendingSearches,
             onTap: onSearchTapped,
+            langCode: langCode,
           ),
         if (suggestion.tags.isNotEmpty)
           TagBrowseSection(
             tags: suggestion.tags,
             selectedTagIds: selectedTagIds,
             onTagTapped: onTagToggled,
+            langCode: langCode,
           ),
         if (suggestion.trendingSongs.isNotEmpty)
-          _TrendingSongsSection(trendingSongs: suggestion.trendingSongs),
+          _TrendingSongsSection(
+            trendingSongs: suggestion.trendingSongs,
+            langCode: langCode,
+          ),
         if (suggestion.genres.isNotEmpty)
           _GenresSection(
             genres: suggestion.genres,
             onSearchTapped: onSearchTapped,
+            langCode: langCode,
           ),
       ],
     );
@@ -70,8 +81,13 @@ class SearchSuggestionView extends StatelessWidget {
 class _RecentSearchesSection extends StatelessWidget {
   final List<String> searches;
   final ValueChanged<String> onTap;
+  final String langCode;
 
-  const _RecentSearchesSection({required this.searches, required this.onTap});
+  const _RecentSearchesSection({
+    required this.searches,
+    required this.onTap,
+    required this.langCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +105,7 @@ class _RecentSearchesSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Recent searches',
+                  t(Str.searchRecent, langCode),
                   style: AppTypography.featureHeading.copyWith(
                     color: AppColors.white,
                   ),
@@ -106,7 +122,7 @@ class _RecentSearchesSection extends StatelessWidget {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'Clear all',
+                  t(Str.searchClearAll, langCode),
                   style: AppTypography.caption.copyWith(
                     color: AppColors.spotifyGreen,
                   ),
@@ -151,8 +167,13 @@ class _RecentSearchesSection extends StatelessWidget {
 class _TrendingSearchesSection extends StatelessWidget {
   final List<String> searches;
   final ValueChanged<String> onTap;
+  final String langCode;
 
-  const _TrendingSearchesSection({required this.searches, required this.onTap});
+  const _TrendingSearchesSection({
+    required this.searches,
+    required this.onTap,
+    required this.langCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +196,7 @@ class _TrendingSearchesSection extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                'Trending',
+                t(Str.searchTrending, langCode),
                 style: AppTypography.featureHeading.copyWith(
                   color: AppColors.white,
                 ),
@@ -241,12 +262,14 @@ class TagBrowseSection extends StatelessWidget {
   final List<Tag> tags;
   final Set<int> selectedTagIds;
   final ValueChanged<Tag> onTagTapped;
+  final String langCode;
 
   const TagBrowseSection({
     super.key,
     required this.tags,
     required this.selectedTagIds,
     required this.onTagTapped,
+    required this.langCode,
   });
 
   static const List<String> _typeOrder = ['mood', 'activity', 'theme', 'era'];
@@ -274,7 +297,7 @@ class TagBrowseSection extends StatelessWidget {
             AppSpacing.xs,
           ),
           child: Text(
-            'Browse by tags',
+            t(Str.searchBrowseTags, langCode),
             style: AppTypography.featureHeading.copyWith(
               color: AppColors.white,
             ),
@@ -421,8 +444,12 @@ class _TagChip extends StatelessWidget {
 
 class _TrendingSongsSection extends StatelessWidget {
   final List trendingSongs;
+  final String langCode;
 
-  const _TrendingSongsSection({required this.trendingSongs});
+  const _TrendingSongsSection({
+    required this.trendingSongs,
+    required this.langCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -437,7 +464,7 @@ class _TrendingSongsSection extends StatelessWidget {
             AppSpacing.xs,
           ),
           child: Text(
-            'Trending songs',
+            t(Str.searchTrendingSongs, langCode),
             style: AppTypography.featureHeading.copyWith(
               color: AppColors.white,
             ),
@@ -535,8 +562,13 @@ class _Placeholder extends StatelessWidget {
 class _GenresSection extends StatelessWidget {
   final List<Genre> genres;
   final ValueChanged<String> onSearchTapped;
+  final String langCode;
 
-  const _GenresSection({required this.genres, required this.onSearchTapped});
+  const _GenresSection({
+    required this.genres,
+    required this.onSearchTapped,
+    required this.langCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -551,7 +583,7 @@ class _GenresSection extends StatelessWidget {
             AppSpacing.md,
           ),
           child: Text(
-            'Explore by genre',
+            t(Str.searchExploreGenres, langCode),
             style: AppTypography.featureHeading.copyWith(
               color: AppColors.white,
             ),

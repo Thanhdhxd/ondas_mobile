@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/widgets/reconnect_listener.dart';
 import 'package:ondas_mobile/features/library/presentation/bloc/library_bloc.dart';
@@ -23,6 +26,7 @@ class PlaylistTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
     return ReconnectListener(
       shouldReconnect: () => context.read<LibraryBloc>().state is LibraryError,
       onReconnect: () =>
@@ -38,6 +42,7 @@ class PlaylistTabWidget extends StatelessWidget {
                     isLoading:
                         state is LibraryLoaded && state.isCreating,
                     onTap: () => _onCreatePlaylist(context),
+                    langCode: l,
                   ),
                 ),
               ),
@@ -53,14 +58,18 @@ class PlaylistTabWidget extends StatelessWidget {
                 SliverFillRemaining(
                   child: _ErrorView(
                     message: state.message,
+                    langCode: l,
                     onRetry: () => context
                         .read<LibraryBloc>()
                         .add(const LibraryRefreshRequested()),
                   ),
                 )
               else if (state is LibraryLoaded) ...[
-                _MyPlaylistsSection(playlists: state.playlists),
-                _SystemPlaylistsSection(playlists: state.systemPlaylists),
+                _MyPlaylistsSection(playlists: state.playlists, langCode: l),
+                _SystemPlaylistsSection(
+                  playlists: state.systemPlaylists,
+                  langCode: l,
+                ),
               ],
             ],
           );
@@ -73,10 +82,12 @@ class PlaylistTabWidget extends StatelessWidget {
 class _CreatePlaylistButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
+  final String langCode;
 
   const _CreatePlaylistButton({
     required this.isLoading,
     required this.onTap,
+    required this.langCode,
   });
 
   @override
@@ -94,9 +105,9 @@ class _CreatePlaylistButton extends StatelessWidget {
               ),
             )
           : const Icon(Icons.add_rounded, color: AppColors.spotifyGreen),
-      label: const Text(
-        'Create New Playlist',
-        style: TextStyle(
+      label: Text(
+        t(Str.libraryCreatePlaylist, langCode),
+        style: const TextStyle(
           color: AppColors.white,
           fontWeight: FontWeight.w600,
           fontSize: 14,
@@ -116,8 +127,12 @@ class _CreatePlaylistButton extends StatelessWidget {
 
 class _MyPlaylistsSection extends StatelessWidget {
   final List playlists;
+  final String langCode;
 
-  const _MyPlaylistsSection({required this.playlists});
+  const _MyPlaylistsSection({
+    required this.playlists,
+    required this.langCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -125,15 +140,17 @@ class _MyPlaylistsSection extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           if (index == 0) {
-            return const _SectionHeader(title: 'My Playlists');
+            return _SectionHeader(
+              title: t(Str.libraryMyPlaylists, langCode),
+            );
           }
           if (playlists.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Text(
-                  'No playlists available. Create a new playlist!',
-                  style: TextStyle(color: AppColors.silver, fontSize: 14),
+                  t(Str.libraryEmptyPlaylists, langCode),
+                  style: const TextStyle(color: AppColors.silver, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -151,8 +168,12 @@ class _MyPlaylistsSection extends StatelessWidget {
 
 class _SystemPlaylistsSection extends StatelessWidget {
   final List<PlaylistSummary> playlists;
+  final String langCode;
 
-  const _SystemPlaylistsSection({required this.playlists});
+  const _SystemPlaylistsSection({
+    required this.playlists,
+    required this.langCode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -160,14 +181,16 @@ class _SystemPlaylistsSection extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           if (index == 0) {
-            return const _SectionHeader(title: 'System Playlists');
+            return _SectionHeader(
+              title: t(Str.librarySystemPlaylists, langCode),
+            );
           }
           if (playlists.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 32),
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               child: Text(
-                'Chưa có system playlist.',
-                style: TextStyle(color: AppColors.silver, fontSize: 14),
+                t(Str.libraryEmptySystemPlaylists, langCode),
+                style: const TextStyle(color: AppColors.silver, fontSize: 14),
               ),
             );
           }
@@ -201,9 +224,14 @@ class _SectionHeader extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final String message;
+  final String langCode;
   final VoidCallback onRetry;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.langCode,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +243,7 @@ class _ErrorView extends StatelessWidget {
               color: AppColors.negativeRed, size: 48),
           const SizedBox(height: 12),
           Text(
-            'Unable to load playlists',
+            t(Str.libraryLoadError, langCode),
             style: const TextStyle(
                 color: AppColors.white,
                 fontSize: 16,
@@ -224,9 +252,9 @@ class _ErrorView extends StatelessWidget {
           const SizedBox(height: 8),
           TextButton(
             onPressed: onRetry,
-            child: const Text(
-              'Retry',
-              style: TextStyle(color: AppColors.spotifyGreen),
+            child: Text(
+              t(Str.retry, langCode),
+              style: const TextStyle(color: AppColors.spotifyGreen),
             ),
           ),
         ],

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/features/player/presentation/widgets/mini_player_widget.dart';
 
@@ -9,10 +13,30 @@ class MainShellScreen extends StatelessWidget {
   const MainShellScreen({super.key, required this.child});
 
   static const _tabs = [
-    _TabItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home', path: '/home'),
-    _TabItem(icon: Icons.search_outlined, activeIcon: Icons.search, label: 'Search', path: '/search'),
-    _TabItem(icon: Icons.library_music_outlined, activeIcon: Icons.library_music, label: 'Library', path: '/library'),
-    _TabItem(icon: Icons.person_outline, activeIcon: Icons.person, label: 'Profile', path: '/profile'),
+    _TabItem(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
+      labelKey: Str.navHome,
+      path: '/home',
+    ),
+    _TabItem(
+      icon: Icons.search_outlined,
+      activeIcon: Icons.search,
+      labelKey: Str.navSearch,
+      path: '/search',
+    ),
+    _TabItem(
+      icon: Icons.library_music_outlined,
+      activeIcon: Icons.library_music,
+      labelKey: Str.navLibrary,
+      path: '/library',
+    ),
+    _TabItem(
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+      labelKey: Str.navProfile,
+      path: '/profile',
+    ),
   ];
 
   int _selectedIndex(BuildContext context) {
@@ -26,6 +50,7 @@ class MainShellScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final selectedIndex = _selectedIndex(context);
+    final l = context.watch<LanguageCubit>().state;
 
     return Scaffold(
       body: Column(
@@ -49,7 +74,7 @@ class MainShellScreen extends StatelessWidget {
                   color: entry.key == selectedIndex ? AppColors.spotifyGreen : AppColors.silver,
                 ),
                 selectedIcon: Icon(entry.value.activeIcon, color: AppColors.spotifyGreen),
-                label: entry.value.label,
+                label: t(entry.value.labelKey, l),
               ),
             )
             .toList(),
@@ -61,13 +86,13 @@ class MainShellScreen extends StatelessWidget {
 class _TabItem {
   final IconData icon;
   final IconData activeIcon;
-  final String label;
+  final Str labelKey;
   final String path;
 
   const _TabItem({
     required this.icon,
     required this.activeIcon,
-    required this.label,
+    required this.labelKey,
     required this.path,
   });
 }

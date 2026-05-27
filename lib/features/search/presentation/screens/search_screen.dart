@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_radius.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
@@ -166,6 +169,7 @@ class _SearchViewState extends State<_SearchView> {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.watch<LanguageCubit>().state;
     return ReconnectListener(
       shouldReconnect: () => context.read<SearchBloc>().state is SearchFailure,
       onReconnect: _retryCurrentSearch,
@@ -187,6 +191,7 @@ class _SearchViewState extends State<_SearchView> {
                   onClear: _clearSearch,
                   selectedTags: _selectedTags.values.toList(),
                   onRemoveTag: _removeTag,
+                  langCode: l,
                 ),
                 Expanded(
                   child: _SearchBody(
@@ -195,6 +200,7 @@ class _SearchViewState extends State<_SearchView> {
                     selectedTags: _selectedTags.values.toList(),
                     availableTags: _availableTags,
                     onTagToggled: _onTagToggled,
+                    langCode: l,
                   ),
                 ),
               ],
@@ -212,6 +218,7 @@ class _SearchBar extends StatelessWidget {
   final VoidCallback onClear;
   final List<Tag> selectedTags;
   final ValueChanged<Tag> onRemoveTag;
+  final String langCode;
 
   const _SearchBar({
     required this.controller,
@@ -219,6 +226,7 @@ class _SearchBar extends StatelessWidget {
     required this.onClear,
     required this.selectedTags,
     required this.onRemoveTag,
+    required this.langCode,
   });
 
   @override
@@ -239,7 +247,7 @@ class _SearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: selectedTags.isNotEmpty
               ? ''
-              : 'Search songs, artists, albums...',
+              : t(Str.searchHint, langCode),
           hintStyle: AppTypography.body.copyWith(color: AppColors.silver),
           prefixIconConstraints: const BoxConstraints(
             minWidth: 0,
@@ -321,6 +329,7 @@ class _SearchBody extends StatelessWidget {
   final List<Tag> selectedTags;
   final List<Tag> availableTags;
   final ValueChanged<Tag> onTagToggled;
+  final String langCode;
 
   const _SearchBody({
     required this.onSearchTapped,
@@ -328,6 +337,7 @@ class _SearchBody extends StatelessWidget {
     required this.selectedTags,
     required this.availableTags,
     required this.onTagToggled,
+    required this.langCode,
   });
 
   @override
@@ -342,12 +352,14 @@ class _SearchBody extends StatelessWidget {
           onSearchTapped: onSearchTapped,
           selectedTagIds: selectedTagIds,
           onTagToggled: onTagToggled,
+          langCode: langCode,
         ),
         SearchLoading() => _SearchResultsWithTags(
           selectedTagIds: selectedTagIds,
           selectedTags: selectedTags,
           availableTags: availableTags,
           onTagToggled: onTagToggled,
+          langCode: langCode,
           results: const _LoadingView(),
         ),
         SearchLoaded(
@@ -365,6 +377,7 @@ class _SearchBody extends StatelessWidget {
             selectedTags: selectedTags,
             availableTags: availableTags,
             onTagToggled: onTagToggled,
+            langCode: langCode,
             results: _ResultsView(
               query: query,
               songs: songs,
@@ -375,10 +388,12 @@ class _SearchBody extends StatelessWidget {
               totalAlbums: totalAlbums,
               hasMore: hasMore,
               isLoadingMore: state is SearchLoadingMore,
+              langCode: langCode,
             ),
           ),
         SearchFailure(:final message) => _ErrorView(
           message: message,
+          langCode: langCode,
           onRetry: () {
             final viewState = context
                 .findAncestorStateOfType<_SearchViewState>();
@@ -402,6 +417,7 @@ class _SearchResultsWithTags extends StatelessWidget {
   final List<Tag> availableTags;
   final ValueChanged<Tag> onTagToggled;
   final Widget results;
+  final String langCode;
 
   const _SearchResultsWithTags({
     required this.selectedTagIds,
@@ -409,6 +425,7 @@ class _SearchResultsWithTags extends StatelessWidget {
     required this.availableTags,
     required this.onTagToggled,
     required this.results,
+    required this.langCode,
   });
 
   @override
@@ -428,6 +445,7 @@ class _SearchResultsWithTags extends StatelessWidget {
                 tags: availableTags,
                 selectedTagIds: selectedTagIds,
                 onTagTapped: onTagToggled,
+                langCode: langCode,
               ),
             ),
           ),
@@ -451,9 +469,13 @@ class _LoadingView extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final String message;
+  final String langCode;
   final VoidCallback onRetry;
-
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.langCode,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -476,9 +498,9 @@ class _ErrorView extends StatelessWidget {
           TextButton(
             key: const Key('searchScreen_retryButton'),
             onPressed: onRetry,
-            child: const Text(
-              'Retry',
-              style: TextStyle(color: AppColors.spotifyGreen),
+            child: Text(
+              t(Str.retry, langCode),
+              style: const TextStyle(color: AppColors.spotifyGreen),
             ),
           ),
         ],
@@ -497,6 +519,7 @@ class _ResultsView extends StatelessWidget {
   final int totalAlbums;
   final bool hasMore;
   final bool isLoadingMore;
+  final String langCode;
 
   const _ResultsView({
     required this.query,
@@ -508,13 +531,14 @@ class _ResultsView extends StatelessWidget {
     required this.totalAlbums,
     required this.hasMore,
     required this.isLoadingMore,
+    required this.langCode,
   });
 
   bool get _isEmpty => songs.isEmpty && artists.isEmpty && albums.isEmpty;
 
   @override
   Widget build(BuildContext context) {
-    if (_isEmpty) return const _NoResultsView();
+    if (_isEmpty) return _NoResultsView(langCode: langCode);
 
     return SingleChildScrollView(
       key: const Key('searchScreen_resultsList'),
@@ -522,7 +546,10 @@ class _ResultsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (songs.isNotEmpty) ...[
-            SearchSectionHeaderWidget(title: 'Songs', total: totalSongs),
+            SearchSectionHeaderWidget(
+              title: t(Str.searchSectionSongs, langCode),
+              total: totalSongs,
+            ),
             _SectionList(
               children: songs
                   .map(
@@ -547,7 +574,10 @@ class _ResultsView extends StatelessWidget {
             ),
           ],
           if (artists.isNotEmpty) ...[
-            SearchSectionHeaderWidget(title: 'Artists', total: totalArtists),
+            SearchSectionHeaderWidget(
+              title: t(Str.searchSectionArtists, langCode),
+              total: totalArtists,
+            ),
             _SectionList(
               children: artists
                   .map(
@@ -568,7 +598,10 @@ class _ResultsView extends StatelessWidget {
             ),
           ],
           if (albums.isNotEmpty) ...[
-            SearchSectionHeaderWidget(title: 'Albums', total: totalAlbums),
+            SearchSectionHeaderWidget(
+              title: t(Str.searchSectionAlbums, langCode),
+              total: totalAlbums,
+            ),
             _SectionList(
               children: albums
                   .map(
@@ -698,7 +731,8 @@ class _SectionListState extends State<_SectionList> {
 }
 
 class _NoResultsView extends StatelessWidget {
-  const _NoResultsView();
+  const _NoResultsView({required this.langCode});
+  final String langCode;
 
   @override
   Widget build(BuildContext context) {
@@ -709,12 +743,12 @@ class _NoResultsView extends StatelessWidget {
           const Icon(Icons.music_off, color: AppColors.silver, size: 64),
           const SizedBox(height: AppSpacing.base),
           Text(
-            'No results found',
+            t(Str.searchNoResults, langCode),
             style: AppTypography.bodyBold.copyWith(color: AppColors.white),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Try a different keyword',
+            t(Str.searchTryDifferentKeyword, langCode),
             style: AppTypography.caption.copyWith(color: AppColors.silver),
           ),
         ],

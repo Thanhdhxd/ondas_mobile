@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/auth_bloc.dart';
@@ -65,7 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const OndasLogoWidget(subtitle: 'Đăng nhập vào Ondas'),
+                    OndasLogoWidget(subtitle: t(Str.loginSubtitle, lang(context))),
                     const SizedBox(height: AppSpacing.xxxl),
                     _LoginForm(
                       formKey: _formKey,
@@ -74,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onSubmit: _submit,
                     ),
                     const SizedBox(height: AppSpacing.xl),
-                    _LoginFooter(),
+                    const _LoginFooter(),
                   ],
                 ),
               ),
@@ -101,6 +103,7 @@ class _LoginForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Form(
       key: formKey,
       child: Column(
@@ -108,24 +111,24 @@ class _LoginForm extends StatelessWidget {
         children: [
           AuthTextFieldWidget(
             fieldKey: const Key('loginScreen_emailField'),
-            label: 'Email',
-            hint: 'email@example.com',
+            label: t(Str.loginEmail, l),
+            hint: t(Str.loginEmailHint, l),
             controller: emailController,
             keyboardType: TextInputType.emailAddress,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Vui lòng nhập email';
+                return t(Str.loginEmailRequired, l);
               }
               if (!RegExp(
                 r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$',
               ).hasMatch(value.trim())) {
-                return 'Email không hợp lệ';
+                return t(Str.loginEmailInvalid, l);
               }
               if (value.trim().length < 6) {
-                return 'Email phải có ít nhất 6 ký tự';
+                return t(Str.loginEmailTooShort, l);
               }
               if (value.length > 255) {
-                return 'Email tối đa 255 ký tự';
+                return t(Str.loginEmailTooLong, l);
               }
               return null;
             },
@@ -133,20 +136,19 @@ class _LoginForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('loginScreen_passwordField'),
-            label: 'Mật khẩu',
+            label: t(Str.loginPassword, l),
             hint: '••••••••',
             controller: passwordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Vui lòng nhập mật khẩu';
+                return t(Str.loginPasswordRequired, l);
               }
               if (value.length < 6) {
-                return 'Mật khẩu phải có ít nhất 6 ký tự';
+                return t(Str.loginPasswordTooShort, l);
               }
-              // max length 128
               if (value.length > 128) {
-                return 'Mật khẩu tối đa 128 ký tự';
+                return t(Str.loginPasswordTooLong, l);
               }
               return null;
             },
@@ -157,9 +159,9 @@ class _LoginForm extends StatelessWidget {
             child: TextButton(
               key: const Key('loginScreen_forgotPasswordButton'),
               onPressed: () => context.push('/forgot-password'),
-              child: const Text(
-                'Quên mật khẩu?',
-                style: TextStyle(color: AppColors.white),
+              child: Text(
+                t(Str.loginForgotPassword, l),
+                style: const TextStyle(color: AppColors.white),
               ),
             ),
           ),
@@ -179,7 +181,7 @@ class _LoginForm extends StatelessWidget {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('ĐĂNG NHẬP'),
+                    : Text(t(Str.loginButton, lang(context))),
               );
             },
           ),
@@ -190,18 +192,21 @@ class _LoginForm extends StatelessWidget {
 }
 
 class _LoginFooter extends StatelessWidget {
+  const _LoginFooter();
+
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text('Chưa có tài khoản?', style: TextStyle(color: AppColors.silver)),
+        Text(t(Str.loginNoAccount, l), style: TextStyle(color: AppColors.silver)),
         TextButton(
           key: const Key('loginScreen_goToRegisterButton'),
           onPressed: () => context.push('/register'),
-          child: const Text(
-            'Đăng ký',
-            style: TextStyle(
+          child: Text(
+            t(Str.loginGoRegister, l),
+            style: const TextStyle(
               color: AppColors.spotifyGreen,
               fontWeight: FontWeight.w700,
             ),

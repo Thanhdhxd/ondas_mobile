@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ondas_mobile/core/localization/str_enum.dart';
+import 'package:ondas_mobile/core/localization/translations.dart';
 import 'package:ondas_mobile/core/theme/app_colors.dart';
 import 'package:ondas_mobile/core/theme/app_spacing.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/reset_password_bloc.dart';
@@ -50,8 +52,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       listener: (context, state) {
         if (state is ResetPasswordSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Password reset successful. Please log in.'),
+            SnackBar(
+              content: Text(t(Str.resetPasswordSuccess, lang(context))),
               backgroundColor: AppColors.spotifyGreen,
             ),
           );
@@ -82,7 +84,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const OndasLogoWidget(subtitle: 'Reset Password'),
+                    OndasLogoWidget(subtitle: t(Str.resetPasswordSubtitle, lang(context))),
                     const SizedBox(height: AppSpacing.xl),
                     _ResetPasswordDescription(email: widget.email),
                     const SizedBox(height: AppSpacing.xxl),
@@ -111,8 +113,13 @@ class _ResetPasswordDescription extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
+    // Interpolate the email into the description
+    final desc = l == 'vi'
+        ? 'Nhập mã OTP đã gửi đến $email và đặt mật khẩu mới.'
+        : 'Enter the OTP sent to $email and set a new password.';
     return Text(
-      'Enter the OTP sent to $email and set a new password.',
+      desc,
       style: const TextStyle(color: AppColors.silver, fontSize: 14, height: 1.5),
       textAlign: TextAlign.center,
     );
@@ -136,6 +143,7 @@ class _ResetPasswordForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = lang(context);
     return Form(
       key: formKey,
       child: Column(
@@ -143,16 +151,16 @@ class _ResetPasswordForm extends StatelessWidget {
         children: [
           AuthTextFieldWidget(
             fieldKey: const Key('resetPasswordScreen_otpField'),
-            label: 'OTP Code',
+            label: t(Str.resetPasswordOtpLabel, l),
             hint: '123456',
             controller: otpController,
             keyboardType: TextInputType.number,
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
-                return 'Please enter the OTP code';
+                return t(Str.resetPasswordOtpRequired, l);
               }
               if (!RegExp(r'^\d{6}$').hasMatch(value.trim())) {
-                return 'OTP must be 6 digits';
+                return t(Str.resetPasswordOtpInvalid, l);
               }
               return null;
             },
@@ -160,16 +168,16 @@ class _ResetPasswordForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('resetPasswordScreen_newPasswordField'),
-            label: 'New Password',
+            label: t(Str.resetPasswordNewLabel, l),
             hint: '••••••••',
             controller: newPasswordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter your new password';
+                return t(Str.resetPasswordNewRequired, l);
               }
               if (value.length < 8) {
-                return 'Password must be at least 8 characters';
+                return t(Str.resetPasswordNewTooShort, l);
               }
               return null;
             },
@@ -177,16 +185,16 @@ class _ResetPasswordForm extends StatelessWidget {
           const SizedBox(height: AppSpacing.base),
           AuthTextFieldWidget(
             fieldKey: const Key('resetPasswordScreen_confirmPasswordField'),
-            label: 'Confirm Password',
+            label: t(Str.resetPasswordConfirmLabel, l),
             hint: '••••••••',
             controller: confirmPasswordController,
             obscure: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please confirm your password';
+                return t(Str.resetPasswordConfirmRequired, l);
               }
               if (value != newPasswordController.text) {
-                return 'Passwords do not match';
+                return t(Str.resetPasswordMismatch, l);
               }
               return null;
             },
@@ -207,7 +215,7 @@ class _ResetPasswordForm extends StatelessWidget {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('RESET PASSWORD'),
+                    : Text(t(Str.resetPasswordButton, lang(context))),
               );
             },
           ),
