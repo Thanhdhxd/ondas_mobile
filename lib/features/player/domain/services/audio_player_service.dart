@@ -30,6 +30,9 @@ abstract class AudioPlayerService {
   /// Load and play a new queue starting at [index].
   Future<void> playSong({required List<Song> songs, required int index});
 
+  /// Stop playback and reset to idle (clears queue and position).
+  Future<void> stop();
+
   /// Pause playback.
   Future<void> pause();
 

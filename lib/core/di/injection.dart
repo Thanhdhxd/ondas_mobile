@@ -316,7 +316,7 @@ Future<void> setupDependencies() async {
   sl.registerLazySingleton<RecordPlayHistoryUseCase>(
     () => RecordPlayHistoryUseCaseImpl(sl<PlayHistoryRepository>()),
   );
-  sl.registerLazySingleton<PlayerBloc>(
+  sl.registerFactory<PlayerBloc>(
     () => PlayerBloc(
       playSongUseCase: sl<PlaySongUseCase>(),
       pauseUseCase: sl<PauseUseCase>(),
