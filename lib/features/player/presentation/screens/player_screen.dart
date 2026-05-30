@@ -64,49 +64,104 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ? 0
         : _currentPage.clamp(0, tabs.length - 1).toInt();
     final currentTitle = tabs.isEmpty ? '' : tabs[safeIndex];
-    return BlocBuilder<PlayerBloc, PlayerState>(
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppColors.nearBlack,
-          body: Stack(
-            children: [
-              _PlayerBackground(coverUrl: state.currentSong?.coverUrl),
-              SafeArea(
-                child: Column(
-                  children: [
-                    _PlayerAppBar(title: currentTitle),
-                    _TabIndicator(
-                      tabCount: tabs.length,
-                      currentIndex: _currentPage,
-                      onTap: (i) => _pageController.animateToPage(
-                        i,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
+    return BlocListener<PlayerBloc, PlayerState>(
+      listenWhen: (previous, current) =>
+          previous.status != current.status &&
+          current.status == PlayerStatus.error,
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              content: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.nearBlack.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.redAccent.withOpacity(0.4),
+                        width: 1.5,
                       ),
                     ),
-                    Expanded(
-                      child: state.status == PlayerStatus.idle
-                          ? _IdleView(langCode: l)
-                          : PageView(
-                              controller: _pageController,
-                              onPageChanged: _onPageChanged,
-                              children: [
-                                _PlayerContent(state: state),
-                                BlocProvider<LyricsBloc>(
-                                  create: (_) => sl<LyricsBloc>(),
-                                  child: const PlayerLyricsTab(),
-                                ),
-                                const PlayerQueueTab(),
-                              ],
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          color: Colors.redAccent,
+                          size: 26,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            state.errorMessage!,
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        );
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+              margin: const EdgeInsets.all(AppSpacing.base),
+            ),
+          );
+        }
       },
+      child: BlocBuilder<PlayerBloc, PlayerState>(
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: AppColors.nearBlack,
+            body: Stack(
+              children: [
+                _PlayerBackground(coverUrl: state.currentSong?.coverUrl),
+                SafeArea(
+                  child: Column(
+                    children: [
+                      _PlayerAppBar(title: currentTitle),
+                      _TabIndicator(
+                        tabCount: tabs.length,
+                        currentIndex: _currentPage,
+                        onTap: (i) => _pageController.animateToPage(
+                          i,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        ),
+                      ),
+                      Expanded(
+                        child: state.status == PlayerStatus.idle
+                            ? _IdleView(langCode: l)
+                            : PageView(
+                                controller: _pageController,
+                                onPageChanged: _onPageChanged,
+                                children: [
+                                  _PlayerContent(state: state),
+                                  BlocProvider<LyricsBloc>(
+                                    create: (_) => sl<LyricsBloc>(),
+                                    child: const PlayerLyricsTab(),
+                                  ),
+                                  const PlayerQueueTab(),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

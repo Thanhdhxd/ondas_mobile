@@ -8,9 +8,22 @@ import 'package:ondas_mobile/features/player/data/services/audio_player_service_
 import 'package:ondas_mobile/features/player/domain/entities/player_status.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/domain/services/audio_player_service.dart';
+import 'package:audio_session/audio_session.dart';
+import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/storage/secure_storage.dart';
 
 Future<AudioPlayerService> initAudioPlayerService() async {
   final isAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  if (!kIsWeb) {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration.music());
+    } catch (e) {
+      debugPrint('Failed to configure AudioSession: $e');
+    }
+  }
+
   if (!isAndroid) {
     return AudioPlayerServiceImpl();
   }
@@ -86,6 +99,16 @@ class AudioServicePlayerServiceImpl implements AudioPlayerService {
   }
 
   @override
+  Future<void> stop() async {
+    _queue = [];
+    _currentIndex = 0;
+    _currentSong = null;
+    await _handler.stop();
+    // No manual _statusController.add here: _playbackSub already emits
+    // PlayerStatus.idle when just_audio transitions to ProcessingState.idle.
+  }
+
+  @override
   Future<void> pause() => _handler.pause();
 
   @override
@@ -139,6 +162,7 @@ class AudioServicePlayerServiceImpl implements AudioPlayerService {
   }
 
   void _onPlaybackState(PlaybackState state) {
+    if (_statusController.isClosed) return;
     if (state.queueIndex != null) {
       _currentIndex = state.queueIndex!;
     }
@@ -258,9 +282,15 @@ class OndasAudioHandler extends BaseAudioHandler
     final mediaItems = _queue.map(_songToMediaItem).toList();
     queue.add(mediaItems);
 
+    final token = await sl<SecureStorage>().getAccessToken();
+    final headers = token != null ? {'Authorization': 'Bearer $token'} : <String, String>{};
+
     final playlist = ConcatenatingAudioSource(
       children: _queue
-          .map((song) => AudioSource.uri(Uri.parse(song.audioUrl)))
+          .map((song) => AudioSource.uri(
+                Uri.parse(song.audioUrl),
+                headers: headers,
+              ))
           .toList(),
     );
 
@@ -272,9 +302,12 @@ class OndasAudioHandler extends BaseAudioHandler
       );
       _setMediaItem(mediaItems[_currentIndex]);
       await _player.play();
-    } catch (_) {
+    } on PlayerException catch (e) {
       await _player.stop();
-      return;
+      throw Exception(e.message ?? 'Lỗi phát nhạc từ máy chủ.');
+    } catch (e) {
+      await _player.stop();
+      throw Exception('Không thể kết nối máy chủ hoặc tải nguồn phát. Vui lòng thử lại sau.');
     }
   }
 
@@ -354,8 +387,12 @@ class OndasAudioHandler extends BaseAudioHandler
 
   @override
   Future<void> stop() async {
+    // Do NOT call super.stop(): BaseAudioHandler.stop() calls playbackState.add()
+    // directly, but playbackState already has an active addStream() pipe from
+    // _player.playbackEventStream — calling add() concurrently throws
+    // "Bad state: You cannot add items while items are being added from addStream".
+    // The idle state update propagates automatically through the existing pipe.
     await _player.stop();
-    await super.stop();
   }
 
   Future<void> dispose() async {

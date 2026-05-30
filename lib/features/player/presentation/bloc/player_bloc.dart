@@ -89,18 +89,37 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     PlaySongRequested event,
     Emitter<PlayerState> emit,
   ) async {
+    if (event.songs.isEmpty) {
+      emit(state.copyWith(
+        status: PlayerStatus.error,
+        errorMessage: 'Danh sách phát rỗng.',
+      ));
+      return;
+    }
+    final index = event.index.clamp(0, event.songs.length - 1);
+    final song = event.songs[index];
+
     emit(state.copyWith(
       status: PlayerStatus.loading,
       queue: event.songs,
-      currentIndex: event.index,
-      currentSong: event.songs[event.index],
+      currentIndex: index,
+      currentSong: song,
       position: Duration.zero,
       duration: Duration.zero,
       clearError: true,
     ));
-    await _playSong(songs: event.songs, index: event.index);
-    final songId = event.songs[event.index].id;
-    _recordPlayHistory(songId: songId, source: event.source).ignore();
+
+    try {
+      await _playSong(songs: event.songs, index: index);
+      final songId = song.id;
+      _recordPlayHistory(songId: songId, source: event.source).ignore();
+    } catch (e) {
+      final cleanMsg = e.toString().replaceAll('Exception: ', '');
+      emit(state.copyWith(
+        status: PlayerStatus.error,
+        errorMessage: cleanMsg,
+      ));
+    }
   }
 
   Future<void> _onPauseRequested(
@@ -184,15 +203,29 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   void _onStatusUpdated(PlayerStatusUpdated event, Emitter<PlayerState> emit) {
     final status = event.status as PlayerStatus;
     if (status == PlayerStatus.idle) {
+      if (state.status == PlayerStatus.error) return;
       emit(state.copyWith(status: PlayerStatus.idle, clearCurrentSong: true));
-    } else {
-      // Sync currentSong from service (may have advanced due to auto-next)
-      emit(state.copyWith(
-        status: status,
-        currentSong: _service.currentSong,
-        currentIndex: _service.currentIndex,
-      ));
+      return;
     }
+
+    final serviceSong = _service.currentSong;
+    var nextIndex = state.currentIndex;
+    // While switching tracks, keep the index chosen by PlaySongRequested. Stale
+    // audio status events can still report the previous track/index briefly.
+    if (state.status != PlayerStatus.loading) {
+      if (serviceSong != null && state.queue.isNotEmpty) {
+        final byId = state.queue.indexWhere((s) => s.id == serviceSong.id);
+        nextIndex = byId >= 0 ? byId : _service.currentIndex;
+      } else {
+        nextIndex = _service.currentIndex;
+      }
+    }
+
+    emit(state.copyWith(
+      status: status,
+      currentSong: serviceSong ?? state.currentSong,
+      currentIndex: nextIndex,
+    ));
   }
 
   void _onPositionUpdated(PlayerPositionUpdated event, Emitter<PlayerState> emit) {
@@ -213,7 +246,10 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     await _positionSub?.cancel();
     await _durationSub?.cancel();
     await _volumeSub?.cancel();
-    await _service.dispose();
+    // Do NOT call _service.dispose() here: AudioPlayerService is a lazy
+    // singleton whose lifetime spans the entire app session. Disposing it
+    // from a factory BLoC would permanently destroy the shared stream
+    // controllers, breaking every subsequent screen / test that needs audio.
     return super.close();
   }
 }

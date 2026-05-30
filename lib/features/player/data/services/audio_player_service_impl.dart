@@ -4,6 +4,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:ondas_mobile/features/player/domain/entities/player_status.dart';
 import 'package:ondas_mobile/features/player/domain/entities/song.dart';
 import 'package:ondas_mobile/features/player/domain/services/audio_player_service.dart';
+import 'package:ondas_mobile/core/di/injection.dart';
+import 'package:ondas_mobile/core/storage/secure_storage.dart';
 
 class AudioPlayerServiceImpl implements AudioPlayerService {
   final AudioPlayer _player;
@@ -24,6 +26,7 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
   }
 
   void _onPlayerState(PlayerState state) {
+    if (_statusController.isClosed) return;
     if (state.processingState == ProcessingState.completed) {
       switch (_repeatMode) {
         case RepeatMode.one:
@@ -54,12 +57,19 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
   }
 
   Future<void> _loadAndPlay(Song song) async {
+    if (_statusController.isClosed) return;
     try {
       _statusController.add(PlayerStatus.loading);
-      await _player.setUrl(song.audioUrl);
+      final token = await sl<SecureStorage>().getAccessToken();
+      final headers = token != null ? {'Authorization': 'Bearer $token'} : null;
+      await _player.setUrl(song.audioUrl, headers: headers);
       unawaited(_player.play());
-    } catch (_) {
-      _statusController.add(PlayerStatus.error);
+    } on PlayerException catch (e) {
+      if (!_statusController.isClosed) _statusController.add(PlayerStatus.error);
+      throw Exception(e.message ?? 'Lỗi phát nhạc từ máy chủ.');
+    } catch (e) {
+      if (!_statusController.isClosed) _statusController.add(PlayerStatus.error);
+      throw Exception('Không thể kết nối máy chủ hoặc tải nguồn phát. Vui lòng thử lại sau.');
     }
   }
 
@@ -91,6 +101,14 @@ class AudioPlayerServiceImpl implements AudioPlayerService {
     _queue = List.of(songs);
     _currentIndex = index.clamp(0, songs.length - 1);
     await _loadAndPlay(_queue[_currentIndex]);
+  }
+
+  @override
+  Future<void> stop() async {
+    _queue = [];
+    _currentIndex = 0;
+    await _player.stop();
+    _statusController.add(PlayerStatus.idle);
   }
 
   @override
