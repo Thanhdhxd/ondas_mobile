@@ -376,14 +376,33 @@ void main() {
     });
 
     // TC16 – Loading indicator hiển thị khi đang fetch danh sách
-    // Data: Vào FavoritesScreen; pump ngay sau khi mở
-    // Expected: CircularProgressIndicator xuất hiện
-    testWidgets('[TC16] Loading indicator hiển thị khi đang fetch',
-        (tester) async {
-      await loginAndGoToFavorites(tester);
-      await tester.pump(const Duration(milliseconds: 50));
+    // Trên device thật pump() không có duration vẫn advance real time một chút,
+    // nên fixed-frame pump không đảm bảo bắt được loading state.
+    // Giải pháp: dùng pumpUntilFound với timeout ngắn (3s) để poll —
+    // spinner xuất hiện ngay khi FavoritesScreen mount và bloc emit
+    // FavoritesListLoading (synchronous trước async API call).
+    testWidgets('[TC16] Loading indicator hiển thị khi đang fetch', (
+      tester,
+    ) async {
+      await pumpApp(tester);
+      await waitForLoginScreen(tester);
+      await tester.enterText(_byKey(_loginEmailKey), _seededEmail);
+      await tester.enterText(_byKey(_loginPasswordKey), _seededPassword);
+      await tester.ensureVisible(_byKey(_loginSubmitKey));
+      await tester.tap(_byKey(_loginSubmitKey));
+      await waitForHomeShell(tester);
 
-      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      final ctx = tester.element(find.byType(NavigationBar));
+      GoRouter.of(ctx).push('/favorites');
+
+      // Poll cho đến khi spinner xuất hiện (FavoritesListLoading đã emit).
+      // Timeout 3s — đủ để screen mount; thường API mất > 100ms nên
+      // spinner sẽ xuất hiện trước khi FavoritesListLoaded thay thế nó.
+      await pumpUntilFound(
+        tester,
+        find.byType(CircularProgressIndicator),
+        timeout: const Duration(seconds: 3),
+      );
     });
 
     // TC17 – Điều hướng vào /favorites sau khi đã đăng nhập, không redirect về login
