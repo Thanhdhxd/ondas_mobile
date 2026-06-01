@@ -73,16 +73,29 @@ jobs:
       # Profile e2e seed data lúc startup nên cần thêm thời gian
       - name: Wait for backend health
         run: |
-          echo "Waiting for backend to become healthy..."
+          echo "Waiting for backend to become ready..."
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+            status=$(curl -s -o /dev/null -w "%{http_code}" \
+              --connect-timeout 2 --max-time 3 \
+              http://localhost:8080/actuator/health || true)
+            status=${status:-000}
+
+            if [ "$status" = "200" ]; then
               echo "Backend is healthy after attempt $i!"
               exit 0
             fi
-            echo "Attempt $i/30 — waiting 5s..."
+
+            # Some images do not expose /actuator/health. Any HTTP response
+            # (< 500) means the server is up and can serve requests.
+            if [ "$status" -gt 0 ] && [ "$status" -lt 500 ]; then
+              echo "Backend is responding (HTTP $status) after attempt $i!"
+              exit 0
+            fi
+
+            echo "Attempt $i/30 — waiting 5s... (status: $status)"
             sleep 5
           done
-          echo "ERROR: Backend did not become healthy within 150s"
+          echo "ERROR: Backend did not become ready within 150s"
           docker compose -f docker-compose.e2e.yml logs
           exit 1
 
