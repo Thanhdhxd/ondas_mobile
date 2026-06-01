@@ -14,6 +14,8 @@ const _seededEmail = 'user@e2e.local';
 const _seededPassword = 'E2ePass123!';
 const _adminEmail = 'admin@e2e.local';
 const _adminPassword = 'E2ePass123!';
+const _inactiveEmail = 'inactive@e2e.local';
+const _disabledEmail = 'disabled@e2e.local';
 
 const _maxLocalLength = 64;
 String _buildMaxEmail() {
@@ -56,6 +58,9 @@ const _emailInvalidMessage = 'Email không hợp lệ';
 const _passwordTooShortMessage = 'Mật khẩu phải có ít nhất 6 ký tự';
 const _passwordTooLongMessage = 'Mật khẩu tối đa 128 ký tự';
 const _emailTooLongMessage = 'Email tối đa 255 ký tự';
+// HTTP 423: DioFailureMapper._extractMessage() đọc data['message'] từ ApiResponse
+// backend → "error.account_locked" (raw error code, chưa được i18n phía client)
+const _accountLockedMessage = 'error.account_locked';
 
 // ---------------------------------------------------------------------------
 // Widget keys
@@ -553,19 +558,51 @@ void main() {
     });
 
     // TC24 – Tài khoản chưa kích hoạt (is_active=false)
-    // Cần fixture inactive@e2e.local trên backend → skip
+    // Data: inactive@e2e.local / E2ePass123! (is_active=false trong seed-e2e.sql)
+    // Expected: backend trả 401 "Unauthorized" (cùng message với sai credentials),
+    //           không vào home, vẫn ở màn Login.
     testWidgets(
       '[TC24] Tài khoản chưa kích hoạt (is_active=false)',
-      (tester) async {},
-      skip: true,
+      (tester) async {
+        await pumpApp(tester);
+        await waitForLoginScreen(tester);
+
+        await enterLoginCredentials(
+          tester,
+          email: _inactiveEmail,
+          password: _seededPassword,
+        );
+        await submitLogin(tester);
+
+        // Backend từ chối với cùng message generic (không tiết lộ lý do)
+        await pumpUntilFound(tester, find.text(_unauthorizedMessage));
+        // Vẫn ở màn Login
+        expect(_byKey(_emailFieldKey), findsOneWidget);
+      },
     );
 
     // TC25 – Tài khoản bị vô hiệu hóa (banned)
-    // Cần fixture disabled@e2e.local trên backend → skip
+    // Data: disabled@e2e.local / E2ePass123! (ban_reason='E2E test: account disabled' trong seed-e2e.sql)
+    // Expected: backend trả 401 "Unauthorized" (cùng message với sai credentials),
+    //           không vào home, vẫn ở màn Login.
     testWidgets(
       '[TC25] Tài khoản bị vô hiệu hóa (banned)',
-      (tester) async {},
-      skip: true,
+      (tester) async {
+        await pumpApp(tester);
+        await waitForLoginScreen(tester);
+
+        await enterLoginCredentials(
+          tester,
+          email: _disabledEmail,
+          password: _seededPassword,
+        );
+        await submitLogin(tester);
+
+        // Backend từ chối với cùng message generic (không tiết lộ lý do bị ban)
+        await pumpUntilFound(tester, find.text(_unauthorizedMessage));
+        // Vẫn ở màn Login
+        expect(_byKey(_emailFieldKey), findsOneWidget);
+      },
     );
 
     // TC26 – Thử SQL Injection trong email
@@ -604,12 +641,43 @@ void main() {
       expect(find.text(_emailInvalidMessage), findsOneWidget);
     });
 
-    // TC28 – Thử brute force nhanh (rate limit)
-    // Cần fixture rate limit trên backend → skip
+    // TC28 – Thử brute force nhanh (rate limit / account lock)
+    // Backend khoá tài khoản sau maxFailedAttempts=5 lần sai liên tiếp
+    // (auth.login.max-failed-attempts=5, trong cùng failure-window 15 phút).
+    // HTTP 423 Locked → DioFailureMapper rơi vào _extractMessage()
+    // → message = "error.account_locked" (raw error code từ ApiResponse).
+    // Expected: lần thứ 6 (hoặc chính xác là lần thứ 5 khi trigger lock)
+    //           hiện snackbar "error.account_locked", không vào home.
     testWidgets(
       '[TC28] Thử brute force nhanh (rate limit)',
-      (tester) async {},
-      skip: true,
+      (tester) async {
+        await pumpApp(tester);
+        await waitForLoginScreen(tester);
+
+        // 4 lần sai đầu: backend trả 401 "Unauthorized", chưa lock
+        for (var i = 0; i < 4; i++) {
+          await enterLoginCredentials(
+            tester,
+            email: _seededEmail,
+            password: _wrongPassword,
+          );
+          await submitLogin(tester);
+          await pumpUntilFound(tester, find.text(_unauthorizedMessage));
+        }
+
+        // Lần thứ 5: vượt ngưỡng → backend throw AccountLockedException
+        // → HTTP 423 → message "error.account_locked"
+        await enterLoginCredentials(
+          tester,
+          email: _seededEmail,
+          password: _wrongPassword,
+        );
+        await submitLogin(tester);
+
+        await pumpUntilFound(tester, find.text(_accountLockedMessage));
+        // Vẫn ở màn Login, không vào home
+        expect(_byKey(_emailFieldKey), findsOneWidget);
+      },
     );
   });
 

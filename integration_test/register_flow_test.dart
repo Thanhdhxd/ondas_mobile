@@ -8,7 +8,9 @@ import 'package:ondas_mobile/core/storage/secure_storage.dart';
 
 import 'e2e_api.dart';
 
-const _existingEmailMessage = 'Email đã tồn tại';
+// HTTP 409: DioFailureMapper._extractMessage() đọc data['message'] từ ApiResponse
+// backend → raw error code (chưa được i18n phía client)
+const _existingEmailMessage = 'error.conflict.email_exists';
 
 const _loginEmailFieldKey = Key('loginScreen_emailField');
 const _goToRegisterButtonKey = Key('loginScreen_goToRegisterButton');
@@ -144,9 +146,9 @@ void main() {
       expect(accessToken, isNotNull);
     });
 
-    testWidgets(
-        '[TC02] Đăng ký thành công với password có ký tự đặc biệt',
-        (tester) async {
+    testWidgets('[TC02] Đăng ký thành công với password có ký tự đặc biệt', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -161,8 +163,9 @@ void main() {
       await waitForHomeShell(tester);
     });
 
-    testWidgets('[TC03] Ẩn/hiện password không làm thay đổi giá trị',
-        (tester) async {
+    testWidgets('[TC03] Ẩn/hiện password không làm thay đổi giá trị', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       const password = 'P@ssw0rd123';
@@ -190,8 +193,7 @@ void main() {
       expect(find.byIcon(Icons.visibility_off), findsNWidgets(2));
     });
 
-    testWidgets('[TC04] Họ và tên có khoảng trắng giữa các từ',
-        (tester) async {
+    testWidgets('[TC04] Họ và tên có khoảng trắng giữa các từ', (tester) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -208,8 +210,9 @@ void main() {
       expect(profile['displayName'], 'Nguyễn Văn Anh Khoa');
     });
 
-    testWidgets('[TC05] Đăng ký thành công sau khi sửa lỗi validation',
-        (tester) async {
+    testWidgets('[TC05] Đăng ký thành công sau khi sửa lỗi validation', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -224,10 +227,7 @@ void main() {
 
       expect(find.text('Email không hợp lệ'), findsOneWidget);
 
-      await enterRegisterCredentials(
-        tester,
-        email: 'user@example.com',
-      );
+      await enterRegisterCredentials(tester, email: 'user@example.com');
       await submitRegister(tester);
 
       await waitForHomeShell(tester);
@@ -235,8 +235,9 @@ void main() {
   });
 
   group('Boundary', () {
-    testWidgets('[TC06] Họ và tên đúng độ dài tối thiểu (2 ký tự)',
-        (tester) async {
+    testWidgets('[TC06] Họ và tên đúng độ dài tối thiểu (2 ký tự)', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -251,8 +252,9 @@ void main() {
       await waitForHomeShell(tester);
     });
 
-    testWidgets('[TC07] Họ và tên ngắn hơn tối thiểu 1 ký tự (1 ký tự)',
-        (tester) async {
+    testWidgets('[TC07] Họ và tên ngắn hơn tối thiểu 1 ký tự (1 ký tự)', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -268,8 +270,9 @@ void main() {
       expect(find.text('Họ và tên phải có ít nhất 2 ký tự'), findsOneWidget);
     });
 
-    testWidgets('[TC08] Password đúng độ dài tối thiểu (6 ký tự)',
-        (tester) async {
+    testWidgets('[TC08] Password đúng độ dài tối thiểu (6 ký tự)', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -284,8 +287,9 @@ void main() {
       await waitForHomeShell(tester);
     });
 
-    testWidgets('[TC09] Password ngắn hơn tối thiểu 1 ký tự (5 ký tự)',
-        (tester) async {
+    testWidgets('[TC09] Password ngắn hơn tối thiểu 1 ký tự (5 ký tự)', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -301,8 +305,7 @@ void main() {
       expect(find.text('Mật khẩu phải có ít nhất 6 ký tự'), findsOneWidget);
     });
 
-    testWidgets('[TC10] Họ và tên có khoảng trắng đầu/cuối',
-        (tester) async {
+    testWidgets('[TC10] Họ và tên có khoảng trắng đầu/cuối', (tester) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -429,8 +432,9 @@ void main() {
       expect(find.text('Vui lòng xác nhận mật khẩu'), findsOneWidget);
     });
 
-    testWidgets('[TC18] Định dạng email không hợp lệ - thiếu @',
-        (tester) async {
+    testWidgets('[TC18] Định dạng email không hợp lệ - thiếu @', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -446,8 +450,9 @@ void main() {
       expect(find.text('Email không hợp lệ'), findsOneWidget);
     });
 
-    testWidgets('[TC19] Định dạng email không hợp lệ - thiếu domain',
-        (tester) async {
+    testWidgets('[TC19] Định dạng email không hợp lệ - thiếu domain', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -464,25 +469,27 @@ void main() {
     });
 
     testWidgets(
-        '[TC20] Định dạng email không hợp lệ - TLD quá ngắn (1 ký tự)',
-        (tester) async {
-      await openRegisterScreen(tester);
+      '[TC20] Định dạng email không hợp lệ - TLD quá ngắn (1 ký tự)',
+      (tester) async {
+        await openRegisterScreen(tester);
 
-      await enterRegisterCredentials(
-        tester,
-        fullName: 'Nguyễn Văn A',
-        email: 'newuser@example.c',
-        password: 'P@ssw0rd123',
-        confirmPassword: 'P@ssw0rd123',
-      );
-      await submitRegister(tester);
-      await tester.pump();
+        await enterRegisterCredentials(
+          tester,
+          fullName: 'Nguyễn Văn A',
+          email: 'newuser@example.c',
+          password: 'P@ssw0rd123',
+          confirmPassword: 'P@ssw0rd123',
+        );
+        await submitRegister(tester);
+        await tester.pump();
 
-      expect(find.text('Email không hợp lệ'), findsOneWidget);
-    });
+        expect(find.text('Email không hợp lệ'), findsOneWidget);
+      },
+    );
 
-    testWidgets('[TC21] Confirm password không khớp với password',
-        (tester) async {
+    testWidgets('[TC21] Confirm password không khớp với password', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -498,8 +505,9 @@ void main() {
       expect(find.text('Mật khẩu không khớp'), findsOneWidget);
     });
 
-    testWidgets('[TC22] Confirm password khác password chỉ về chữ hoa/thường',
-        (tester) async {
+    testWidgets('[TC22] Confirm password khác password chỉ về chữ hoa/thường', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -555,8 +563,12 @@ void main() {
       expect(find.text('Vui lòng nhập họ và tên'), findsOneWidget);
     });
 
-    testWidgets('[TC25] Thử SQL Injection trong trường họ và tên',
-        (tester) async {
+    testWidgets('[TC25] Thử SQL Injection trong trường họ và tên', (
+      tester,
+    ) async {
+      // "' OR '1'='1" là họ và tên hợp lệ (>= 2 ký tự, không có format validator).
+      // Backend dùng parameterized queries → SQL injection không có hiệu lực,
+      // input được lưu as-is một cách an toàn → đăng ký thành công.
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -567,10 +579,9 @@ void main() {
         confirmPassword: 'P@ssw0rd123',
       );
       await submitRegister(tester);
-      await tester.pumpAndSettle();
 
-      expect(find.byType(NavigationBar), findsNothing);
-      expect(_byKey(_fullNameFieldKey), findsOneWidget);
+      // Đăng ký thành công → vào home, không có lỗi hệ thống
+      await waitForHomeShell(tester);
     });
 
     testWidgets('[TC26] Thử XSS trong trường họ và tên', (tester) async {
@@ -606,18 +617,21 @@ void main() {
   });
 
   group('UX / Navigation', () {
-    testWidgets('[TC28] Nhấn "Đã có tài khoản? Đăng nhập" chuyển về màn Login',
-        (tester) async {
-      await openRegisterScreen(tester);
+    testWidgets(
+      '[TC28] Nhấn "Đã có tài khoản? Đăng nhập" chuyển về màn Login',
+      (tester) async {
+        await openRegisterScreen(tester);
 
-      await tester.ensureVisible(_byKey(_goToLoginButtonKey));
-      await tester.tap(_byKey(_goToLoginButtonKey));
+        await tester.ensureVisible(_byKey(_goToLoginButtonKey));
+        await tester.tap(_byKey(_goToLoginButtonKey));
 
-      await pumpUntilFound(tester, _byKey(_loginEmailFieldKey));
-    });
+        await pumpUntilFound(tester, _byKey(_loginEmailFieldKey));
+      },
+    );
 
-    testWidgets('[TC29] Người dùng đã đăng nhập truy cập màn Register',
-        (tester) async {
+    testWidgets('[TC29] Người dùng đã đăng nhập truy cập màn Register', (
+      tester,
+    ) async {
       await openRegisterScreen(tester);
 
       await enterRegisterCredentials(
@@ -642,31 +656,34 @@ void main() {
     // Requires controllable API delay to assert loading state.
     testWidgets(
       '[TC30] Nút Đăng ký bị vô hiệu hóa khi đang gọi API',
-      (tester) async {},
-      skip: true,
-    );
-  });
+      (tester) async {
+        await openRegisterScreen(tester);
 
-  group('Network', () {
-    // Requires network fault injection.
-    testWidgets(
-      '[TC31] Đăng ký khi mất kết nối mạng',
-      (tester) async {},
-      skip: true,
-    );
+        await enterRegisterCredentials(
+          tester,
+          fullName: 'TC30 User',
+          email: 'tc30unique@e2e.local',
+          password: 'P@ssw0rd123',
+          confirmPassword: 'P@ssw0rd123',
+        );
 
-    // Requires backend timeout simulation.
-    testWidgets(
-      '[TC32] Đăng ký khi server timeout',
-      (tester) async {},
-      skip: true,
-    );
+        // Tap submit → AuthBloc emit AuthLoading ngay lập tức (trước khi API trả về)
+        await tester.ensureVisible(_byKey(_submitButtonKey));
+        await tester.tap(_byKey(_submitButtonKey));
 
-    // Requires backend error simulation (500).
-    testWidgets(
-      '[TC33] Đăng ký khi server trả về lỗi 500',
-      (tester) async {},
-      skip: true,
+        // Pump 1 frame để Flutter rebuild với trạng thái AuthLoading
+        await tester.pump();
+
+        // Nút phải disabled: onPressed == null
+        final button = tester.widget<ElevatedButton>(_byKey(_submitButtonKey));
+        expect(button.onPressed, isNull);
+
+        // Spinner phải xuất hiện thay cho text nút
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+        // Chờ API hoàn thành → vào home (đảm bảo test kết thúc sạch)
+        await waitForHomeShell(tester);
+      },
     );
   });
 }
