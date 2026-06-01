@@ -55,7 +55,7 @@ class _AvatarImage extends StatelessWidget {
             ? Image.network(
                 avatarUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _Placeholder(),
+                errorBuilder: (_, _, _) => const _Placeholder(),
               )
             : const _Placeholder(),
       ),

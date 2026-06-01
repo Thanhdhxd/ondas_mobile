@@ -27,8 +27,6 @@ const _seededPassword = 'E2ePass123!';
 // Song 01 "E2E Track One"        → created NOW()-25min   → page 2, item #27
 // ---------------------------------------------------------------------------
 const _songId01Title = 'E2E Track One';      // page 2 — useful for load-more assertion
-const _songId26Title =
-    'A Very Long Song Title That Exceeds One Hundred Characters For Testing Ellipsis And Text Overflow In Various UI Components';
 const _songId27Title = 'Multi Artist Collab'; // page 1, item #1 (newest)
 
 // ---------------------------------------------------------------------------

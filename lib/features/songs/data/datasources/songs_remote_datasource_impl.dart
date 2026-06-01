@@ -21,10 +21,10 @@ class SongsRemoteDatasourceImpl implements SongsRemoteDatasource {
     final queryParameters = <String, dynamic>{
       'page': page,
       'size': size,
-      if (artistId != null) 'artistId': artistId,
-      if (albumId != null) 'albumId': albumId,
-      if (genreId != null) 'genreId': genreId,
-      if (tagIds != null && tagIds.isNotEmpty) 'tagIds': tagIds,
+      ...?(artistId == null ? null : {'artistId': artistId}),
+      ...?(albumId == null ? null : {'albumId': albumId}),
+      ...?(genreId == null ? null : {'genreId': genreId}),
+      if (tagIds?.isNotEmpty ?? false) 'tagIds': tagIds,
     };
 
     final response = await _dioClient.get<Map<String, dynamic>>(

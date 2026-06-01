@@ -78,7 +78,7 @@ void main() {
     tags: [],
   );
 
-  SearchResult _buildResult({int page = 0}) => SearchResult(
+  SearchResult buildResult({int page = 0}) => SearchResult(
         query: 'test',
         page: page,
         size: 10,
@@ -122,7 +122,7 @@ void main() {
       'emits [SearchLoading, SearchLoaded] when use case succeeds',
       build: () {
         when(() => mockUseCase(any()))
-            .thenAnswer((_) async => Right(_buildResult()));
+          .thenAnswer((_) async => Right(buildResult()));
         return bloc;
       },
       act: (b) => b.add(const SearchSubmitted('test')),
@@ -195,7 +195,7 @@ void main() {
       'emits [SearchLoadingMore, SearchLoaded] with merged results on load more',
       build: () {
         when(() => mockUseCase(any()))
-            .thenAnswer((_) async => Right(_buildResult(page: 1)));
+          .thenAnswer((_) async => Right(buildResult(page: 1)));
         return bloc;
       },
       seed: () => SearchLoaded(
