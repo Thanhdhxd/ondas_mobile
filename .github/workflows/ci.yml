@@ -121,21 +121,13 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            flutter test integration_test/login_flow_test.dart \
-              --dart-define=API_HOST=10.0.2.2 \
-              --timeout 300s
+            flutter test integration_test/login_flow_test.dart --dart-define=API_HOST=10.0.2.2 --timeout 300s
 
-            flutter test integration_test/register_flow_test.dart \
-              --dart-define=API_HOST=10.0.2.2 \
-              --timeout 300s
+            flutter test integration_test/register_flow_test.dart --dart-define=API_HOST=10.0.2.2 --timeout 300s
 
-            flutter test integration_test/favorites_flow_test.dart \
-              --dart-define=API_HOST=10.0.2.2 \
-              --timeout 300s
+            flutter test integration_test/favorites_flow_test.dart --dart-define=API_HOST=10.0.2.2 --timeout 300s
 
-            flutter test integration_test/music_streaming_test.dart \
-              --dart-define=API_HOST=10.0.2.2 \
-              --timeout 300s
+            flutter test integration_test/music_streaming_test.dart --dart-define=API_HOST=10.0.2.2 --timeout 300s
 
       # In 200 dòng log backend khi có test fail — hữu ích khi debug
       - name: Show backend logs on failure
