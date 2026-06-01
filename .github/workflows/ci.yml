@@ -1,0 +1,135 @@
+name: CI — ondas_mobile
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  JOB 1: Unit Tests
+  #  Không cần backend. Chạy nhanh để fail sớm nếu code logic sai.
+  # ══════════════════════════════════════════════════════════════════════
+  unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run unit tests
+        run: flutter test test/unit --coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+  # ══════════════════════════════════════════════════════════════════════
+  #  JOB 2: Integration Tests (E2E)
+  #  Yêu cầu job 1 pass. Spin up backend e2e + Android emulator.
+  # ══════════════════════════════════════════════════════════════════════
+  integration:
+    name: Integration Tests (E2E)
+    runs-on: ubuntu-latest
+    needs: unit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Cần KVM để Android emulator chạy được trên ubuntu-latest
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Pull image từ DockerHub và start backend với profile e2e
+      - name: Start E2E backend
+        run: docker compose -f docker-compose.e2e.yml up -d
+
+      # Chờ backend sẵn sàng — tối đa 150 giây
+      # Profile e2e seed data lúc startup nên cần thêm thời gian
+      - name: Wait for backend health
+        run: |
+          echo "Waiting for backend to become healthy..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "Backend is healthy after attempt $i!"
+              exit 0
+            fi
+            echo "Attempt $i/30 — waiting 5s..."
+            sleep 5
+          done
+          echo "ERROR: Backend did not become healthy within 150s"
+          docker compose -f docker-compose.e2e.yml logs
+          exit 1
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.6'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Khởi động Android emulator và chạy từng file integration test.
+      # --dart-define=API_HOST=10.0.2.2:
+      #   Android emulator dùng 10.0.2.2 để reach localhost của host machine.
+      - name: Run integration tests on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          arch: x86_64
+          profile: Nexus 6
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            flutter test integration_test/login_flow_test.dart \
+              --dart-define=API_HOST=10.0.2.2 \
+              --timeout 300s
+
+            flutter test integration_test/register_flow_test.dart \
+              --dart-define=API_HOST=10.0.2.2 \
+              --timeout 300s
+
+            flutter test integration_test/favorites_flow_test.dart \
+              --dart-define=API_HOST=10.0.2.2 \
+              --timeout 300s
+
+            flutter test integration_test/music_streaming_test.dart \
+              --dart-define=API_HOST=10.0.2.2 \
+              --timeout 300s
+
+      # In 200 dòng log backend khi có test fail — hữu ích khi debug
+      - name: Show backend logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.e2e.yml logs --tail=200
+
+      # Dọn dẹp dù pass hay fail. -v xóa volume để run tiếp theo bắt đầu sạch.
+      - name: Teardown E2E backend
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml down -v

@@ -4,6 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/network/network_status.dart';
+import 'package:ondas_mobile/core/network/network_status_cubit.dart';
 import 'package:ondas_mobile/features/profile/domain/entities/user_profile.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
@@ -11,11 +14,16 @@ import 'package:ondas_mobile/features/profile/presentation/bloc/profile_state.da
 import 'package:ondas_mobile/features/profile/presentation/screens/profile_screen.dart';
 
 class MockProfileBloc extends MockBloc<ProfileEvent, ProfileState> implements ProfileBloc {}
+class MockLanguageCubit extends MockCubit<String> implements LanguageCubit {}
+class MockNetworkStatusCubit extends MockCubit<NetworkStatus>
+  implements NetworkStatusCubit {}
 
 class _FakeProfileEvent extends Fake implements ProfileEvent {}
 
 void main() {
   late MockProfileBloc mockBloc;
+  late MockLanguageCubit mockLanguageCubit;
+  late MockNetworkStatusCubit mockNetworkStatusCubit;
 
   const tProfile = UserProfile(
     id: 'uuid-1',
@@ -30,6 +38,16 @@ void main() {
 
   setUp(() {
     mockBloc = MockProfileBloc();
+    mockLanguageCubit = MockLanguageCubit();
+    when(() => mockLanguageCubit.state).thenReturn('en');
+    whenListen(mockLanguageCubit, Stream<String>.value('en'), initialState: 'en');
+    mockNetworkStatusCubit = MockNetworkStatusCubit();
+    when(() => mockNetworkStatusCubit.state).thenReturn(NetworkStatus.online);
+    whenListen(
+      mockNetworkStatusCubit,
+      Stream<NetworkStatus>.value(NetworkStatus.online),
+      initialState: NetworkStatus.online,
+    );
   });
 
   Widget buildSubject() {
@@ -49,7 +67,13 @@ void main() {
         ),
       ],
     );
-    return MaterialApp.router(routerConfig: router);
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<LanguageCubit>.value(value: mockLanguageCubit),
+        BlocProvider<NetworkStatusCubit>.value(value: mockNetworkStatusCubit),
+      ],
+      child: MaterialApp.router(routerConfig: router),
+    );
   }
 
   group('ProfileScreen', () {

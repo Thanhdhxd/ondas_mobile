@@ -32,6 +32,7 @@ void main() {
       return NetworkStatusCubit(connectivityService: connectivityService);
     },
     act: (cubit) async {
+      await Future<void>.delayed(Duration.zero);
       statusController.add(NetworkStatus.online);
       await Future<void>.delayed(Duration.zero);
     },

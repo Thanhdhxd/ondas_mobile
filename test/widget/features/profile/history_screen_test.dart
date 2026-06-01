@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/network/network_status.dart';
+import 'package:ondas_mobile/core/network/network_status_cubit.dart';
 import 'package:ondas_mobile/features/profile/domain/entities/play_history_item.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/history_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/history_event.dart';
@@ -11,11 +14,16 @@ import 'package:ondas_mobile/features/profile/presentation/screens/history_scree
 
 class MockHistoryBloc extends MockBloc<HistoryEvent, HistoryState>
     implements HistoryBloc {}
+class MockLanguageCubit extends MockCubit<String> implements LanguageCubit {}
+class MockNetworkStatusCubit extends MockCubit<NetworkStatus>
+  implements NetworkStatusCubit {}
 
 class _FakeHistoryEvent extends Fake implements HistoryEvent {}
 
 void main() {
   late MockHistoryBloc mockBloc;
+  late MockLanguageCubit mockLanguageCubit;
+  late MockNetworkStatusCubit mockNetworkStatusCubit;
 
   final tSong = PlayHistorySong(
     id: 'song-uuid',
@@ -43,13 +51,27 @@ void main() {
 
   setUp(() {
     mockBloc = MockHistoryBloc();
+    mockLanguageCubit = MockLanguageCubit();
+    when(() => mockLanguageCubit.state).thenReturn('en');
+    whenListen(mockLanguageCubit, Stream<String>.value('en'), initialState: 'en');
+    mockNetworkStatusCubit = MockNetworkStatusCubit();
+    when(() => mockNetworkStatusCubit.state).thenReturn(NetworkStatus.online);
+    whenListen(
+      mockNetworkStatusCubit,
+      Stream<NetworkStatus>.value(NetworkStatus.online),
+      initialState: NetworkStatus.online,
+    );
   });
 
   Widget buildSubject() {
-    return MaterialApp(
-      home: BlocProvider<HistoryBloc>.value(
-        value: mockBloc,
-        child: const HistoryScreen(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<HistoryBloc>.value(value: mockBloc),
+        BlocProvider<LanguageCubit>.value(value: mockLanguageCubit),
+        BlocProvider<NetworkStatusCubit>.value(value: mockNetworkStatusCubit),
+      ],
+      child: const MaterialApp(
+        home: HistoryScreen(),
       ),
     );
   }

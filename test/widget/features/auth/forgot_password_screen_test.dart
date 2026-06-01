@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/forgot_password_bloc.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/forgot_password_event.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/forgot_password_state.dart';
@@ -12,9 +13,11 @@ import 'package:ondas_mobile/features/auth/presentation/screens/forgot_password_
 class MockForgotPasswordBloc
     extends MockBloc<ForgotPasswordEvent, ForgotPasswordState>
     implements ForgotPasswordBloc {}
+class MockLanguageCubit extends MockCubit<String> implements LanguageCubit {}
 
 void main() {
   late MockForgotPasswordBloc mockBloc;
+  late MockLanguageCubit mockLanguageCubit;
 
   setUpAll(() {
     registerFallbackValue(
@@ -25,13 +28,19 @@ void main() {
   setUp(() {
     mockBloc = MockForgotPasswordBloc();
     when(() => mockBloc.state).thenReturn(const ForgotPasswordInitial());
+    mockLanguageCubit = MockLanguageCubit();
+    when(() => mockLanguageCubit.state).thenReturn('vi');
+    whenListen(mockLanguageCubit, Stream<String>.value('vi'), initialState: 'vi');
   });
 
   Widget buildSubject() {
-    return MaterialApp(
-      home: BlocProvider<ForgotPasswordBloc>.value(
-        value: mockBloc,
-        child: const ForgotPasswordScreen(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<ForgotPasswordBloc>.value(value: mockBloc),
+        BlocProvider<LanguageCubit>.value(value: mockLanguageCubit),
+      ],
+      child: const MaterialApp(
+        home: ForgotPasswordScreen(),
       ),
     );
   }
@@ -151,7 +160,12 @@ void main() {
       // Pre-fill email so the extra param is available
       final emailController = TextEditingController(text: testEmail);
 
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+      await tester.pumpWidget(
+        BlocProvider<LanguageCubit>.value(
+          value: mockLanguageCubit,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
       // Trigger listener
       await tester.pump();
       await tester.pump();
