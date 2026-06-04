@@ -410,11 +410,11 @@ void main() {
         (tester) async {
       await loginAndGoToFavorites(tester);
 
-      final context1 = tester.element(find.byType(NavigationBar));
+      // Đang ở /favorites (ngoài ShellRoute) → không có NavigationBar.
+      // Lấy context từ widget đang visible trên FavoritesScreen.
+      final context1 = tester.element(find.byKey(_favoritesAppBarKey));
       GoRouter.of(context1).go('/home');
-      // Dùng pumpUntilFound thay vì pumpAndSettle() vì trên CI animation
-      // route có thể chưa xong sau 1 frame → NavigationBar chưa mount
-      // → tester.element() throw "Bad state: No element".
+      // Chờ ShellRoute mount xong (NavigationBar xuất hiện).
       await pumpUntilFound(tester, find.byType(NavigationBar));
 
       final context2 = tester.element(find.byType(NavigationBar));

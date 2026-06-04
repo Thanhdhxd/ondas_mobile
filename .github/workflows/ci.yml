@@ -2,9 +2,7 @@ name: CI — ondas_mobile
 
 on:
   push:
-    branches: [main, dev]
-  pull_request:
-    branches: [main, dev]
+    branches: [main]
 
 jobs:
 
