@@ -77,7 +77,7 @@ class ApiConstants {
   ///   flutter test ... --dart-define=API_HOST=10.0.2.2
   static const String devHost = String.fromEnvironment(
     'API_HOST',
-    defaultValue: '192.168.123.14',
+    defaultValue: '192.168.123.6',
   );
 
   /// Chuyển relative path từ API thành absolute URL.
