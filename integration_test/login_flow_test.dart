@@ -61,6 +61,10 @@ const _emailTooLongMessage = 'Email tối đa 255 ký tự';
 // HTTP 423: DioFailureMapper._extractMessage() đọc data['message'] từ ApiResponse
 // backend → "error.account_locked" (raw error code, chưa được i18n phía client)
 const _accountLockedMessage = 'error.account_locked';
+// Dedicated account for TC28 (brute-force / lockout test).
+// Using a separate account ensures user@e2e.local is never locked
+// by in-memory rate-limiting, which would break subsequent test files.
+const _lockableEmail = 'lockable@e2e.local';
 
 // ---------------------------------------------------------------------------
 // Widget keys
@@ -648,6 +652,8 @@ void main() {
     // → message = "error.account_locked" (raw error code từ ApiResponse).
     // Expected: lần thứ 6 (hoặc chính xác là lần thứ 5 khi trigger lock)
     //           hiện snackbar "error.account_locked", không vào home.
+    // NOTE: dùng lockable@e2e.local thay vì user@e2e.local để tránh backend
+    // in-memory lock lan sang các test file khác (vd: favorites_flow_test).
     testWidgets(
       '[TC28] Thử brute force nhanh (rate limit)',
       (tester) async {
@@ -658,7 +664,7 @@ void main() {
         for (var i = 0; i < 4; i++) {
           await enterLoginCredentials(
             tester,
-            email: _seededEmail,
+            email: _lockableEmail,
             password: _wrongPassword,
           );
           await submitLogin(tester);
@@ -669,7 +675,7 @@ void main() {
         // → HTTP 423 → message "error.account_locked"
         await enterLoginCredentials(
           tester,
-          email: _seededEmail,
+          email: _lockableEmail,
           password: _wrongPassword,
         );
         await submitLogin(tester);

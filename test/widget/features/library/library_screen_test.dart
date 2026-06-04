@@ -1,14 +1,26 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
+import 'package:ondas_mobile/core/network/network_status.dart';
+import 'package:ondas_mobile/core/network/network_status_cubit.dart';
+import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_bloc.dart';
+import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_event.dart';
+import 'package:ondas_mobile/features/favorites/presentation/bloc/favorites_state.dart';
 import 'package:ondas_mobile/features/library/presentation/bloc/library_bloc.dart';
 import 'package:ondas_mobile/features/library/presentation/screens/library_screen.dart';
 import 'package:ondas_mobile/features/playlist/domain/entities/playlist_summary.dart';
 
 class MockLibraryBloc extends MockBloc<LibraryEvent, LibraryState>
     implements LibraryBloc {}
+class MockFavoritesBloc extends MockBloc<FavoritesEvent, FavoritesState>
+  implements FavoritesBloc {}
+class MockLanguageCubit extends MockCubit<String> implements LanguageCubit {}
+class MockNetworkStatusCubit extends MockCubit<NetworkStatus>
+  implements NetworkStatusCubit {}
 
 const tPlaylist = PlaylistSummary(
   id: 'pl-1',
@@ -19,6 +31,9 @@ const tPlaylist = PlaylistSummary(
 
 void main() {
   late MockLibraryBloc mockBloc;
+  late MockFavoritesBloc mockFavoritesBloc;
+  late MockLanguageCubit mockLanguageCubit;
+  late MockNetworkStatusCubit mockNetworkStatusCubit;
 
   setUpAll(() {
     registerFallbackValue(const LibraryRefreshRequested());
@@ -27,11 +42,51 @@ void main() {
   setUp(() async {
     await GetIt.I.reset();
     mockBloc = MockLibraryBloc();
+    mockFavoritesBloc = MockFavoritesBloc();
+    when(() => mockFavoritesBloc.state).thenReturn(
+      const FavoritesListLoaded(
+        items: [],
+        hasMore: false,
+        currentPage: 0,
+      ),
+    );
+    whenListen(
+      mockFavoritesBloc,
+      Stream<FavoritesState>.value(
+        const FavoritesListLoaded(
+          items: [],
+          hasMore: false,
+          currentPage: 0,
+        ),
+      ),
+      initialState: const FavoritesListLoaded(
+        items: [],
+        hasMore: false,
+        currentPage: 0,
+      ),
+    );
+    mockLanguageCubit = MockLanguageCubit();
+    when(() => mockLanguageCubit.state).thenReturn('en');
+    whenListen(mockLanguageCubit, Stream<String>.value('en'), initialState: 'en');
+    mockNetworkStatusCubit = MockNetworkStatusCubit();
+    when(() => mockNetworkStatusCubit.state).thenReturn(NetworkStatus.online);
+    whenListen(
+      mockNetworkStatusCubit,
+      Stream<NetworkStatus>.value(NetworkStatus.online),
+      initialState: NetworkStatus.online,
+    );
     GetIt.I.registerFactory<LibraryBloc>(() => mockBloc);
+    GetIt.I.registerFactory<FavoritesBloc>(() => mockFavoritesBloc);
   });
 
   Widget buildSubject() {
-    return const MaterialApp(home: LibraryScreen());
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<LanguageCubit>.value(value: mockLanguageCubit),
+        BlocProvider<NetworkStatusCubit>.value(value: mockNetworkStatusCubit),
+      ],
+      child: const MaterialApp(home: LibraryScreen()),
+    );
   }
 
   group('LibraryScreen', () {
@@ -115,12 +170,13 @@ void main() {
       verify(() => mockBloc.add(const LibraryRefreshRequested())).called(1);
     });
 
-    testWidgets('shows Favorite tab with coming soon message', (tester) async {
+    testWidgets('shows Favorite tab empty state', (tester) async {
       when(() => mockBloc.state).thenReturn(const LibraryLoading());
 
       await tester.pumpWidget(buildSubject());
 
-      expect(find.text('Feature under development'), findsOneWidget);
+      expect(find.text('No favorite songs yet'), findsOneWidget);
+      expect(find.text('Tap the ♥ icon to add songs'), findsOneWidget);
     });
   });
 }

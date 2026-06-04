@@ -1,0 +1,91 @@
+# ══════════════════════════════════════════════════════════════════════════
+#  docker-compose.e2e.yml — CI / Integration Test
+#
+#  Mục đích:
+#    Spin up backend ondas-be với Spring profile "e2e" để phục vụ
+#    Flutter integration test trong GitHub Actions.
+#
+#  Cách dùng:
+#    docker compose -f docker-compose.e2e.yml up -d
+#    docker compose -f docker-compose.e2e.yml down -v
+#
+#  Lưu ý:
+#    - Pull image từ DockerHub (không rebuild).
+#    - Không dùng volumes → mỗi run bắt đầu từ DB trống.
+#    - Profile e2e tự seed data lúc startup (seed-on-startup: true).
+#    - SPRING_DATASOURCE_URL override port 5433 hardcode trong
+#      application-e2e.yaml về port 5432 chuẩn Docker network.
+# ══════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── PostgreSQL ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       ondas_e2e     # DB riêng cho e2e, không đụng dev/prod
+      POSTGRES_USER:     ondas_user
+      POSTGRES_PASSWORD: ondas_password
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ondas_user -d ondas_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── MinIO ─────────────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── Spring Boot Backend (profile e2e) ─────────────────────────────────
+  ondas-be:
+    image: dinhtrieuxtnd/ondas-be:latest
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: e2e
+
+      # Fix: application-e2e.yaml hardcode port 5433 (dev local mapping).
+      # Trong Docker network, postgres chạy trên port 5432 nội bộ.
+      SPRING_DATASOURCE_URL:      jdbc:postgresql://postgres:5432/ondas_e2e
+      SPRING_DATASOURCE_USERNAME: ondas_user
+      SPRING_DATASOURCE_PASSWORD: ondas_password
+
+      # JWT — dùng secret tạm cho CI, không phải production secret
+      JWT_SECRET:     e2e-ci-secret-key-only-for-testing
+      JWT_EXPIRATION: 86400000
+
+      # MinIO
+      MINIO_ENDPOINT:     http://minio:9000
+      MINIO_ACCESS_KEY:   minioadmin
+      MINIO_SECRET_KEY:   minioadmin
+      MINIO_BUCKET_AUDIO: ondas-audio
+      MINIO_BUCKET_IMAGE: ondas-images
+
+      JAVA_OPTS: "-Xmx384m -Xms256m -XX:+UseContainerSupport"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - e2e-network
+
+# ── Networks ───────────────────────────────────────────────────────────
+networks:
+  e2e-network:
+    driver: bridge

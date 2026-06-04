@@ -121,7 +121,7 @@ class _QueueItem extends StatelessWidget {
                 width: 48,
                 height: 48,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _FallbackCover(),
+                errorBuilder: (_, _, _) => const _FallbackCover(),
               )
             : const _FallbackCover(),
       ),

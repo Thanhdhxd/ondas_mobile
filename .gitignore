@@ -45,3 +45,4 @@ app.*.map.json
 /android/app/release
 
 main_flows.md
+CI_GUIDE.md

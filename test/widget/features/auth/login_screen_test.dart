@@ -3,17 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:ondas_mobile/core/localization/language_cubit.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/auth_event.dart';
 import 'package:ondas_mobile/features/auth/presentation/bloc/auth_state.dart';
 import 'package:ondas_mobile/features/auth/presentation/screens/login_screen.dart';
 
 class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
+class MockLanguageCubit extends MockCubit<String> implements LanguageCubit {}
 
 class _FakeAuthEvent extends Fake implements AuthEvent {}
 
 void main() {
   late MockAuthBloc mockBloc;
+  late MockLanguageCubit mockLanguageCubit;
 
   setUpAll(() {
     registerFallbackValue(_FakeAuthEvent());
@@ -21,13 +24,19 @@ void main() {
 
   setUp(() {
     mockBloc = MockAuthBloc();
+    mockLanguageCubit = MockLanguageCubit();
+    when(() => mockLanguageCubit.state).thenReturn('en');
+    whenListen(mockLanguageCubit, Stream<String>.value('en'), initialState: 'en');
   });
 
   Widget buildSubject() {
-    return MaterialApp(
-      home: BlocProvider<AuthBloc>.value(
-        value: mockBloc,
-        child: const LoginScreen(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>.value(value: mockBloc),
+        BlocProvider<LanguageCubit>.value(value: mockLanguageCubit),
+      ],
+      child: const MaterialApp(
+        home: LoginScreen(),
       ),
     );
   }

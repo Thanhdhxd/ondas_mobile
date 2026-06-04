@@ -57,7 +57,7 @@ class _CoverImage extends StatelessWidget {
             ? Image.network(
                 coverUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const _Placeholder(),
+                errorBuilder: (_, _, _) => const _Placeholder(),
               )
             : const _Placeholder(),
       ),

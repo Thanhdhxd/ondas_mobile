@@ -35,7 +35,9 @@ Future<void> pumpUntilFound(
       return;
     }
   }
-  throw TestFailure('Timed out waiting for ${finder.description}');
+  throw TestFailure(
+    'Timed out waiting for ${finder.describeMatch(Plurality.one)}',
+  );
 }
 
 Future<void> pumpApp(WidgetTester tester) async {

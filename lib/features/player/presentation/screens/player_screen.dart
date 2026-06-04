@@ -81,10 +81,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.nearBlack.withOpacity(0.85),
+                      color: AppColors.nearBlack.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: Colors.redAccent.withOpacity(0.4),
+                        color: Colors.redAccent.withValues(alpha: 0.4),
                         width: 1.5,
                       ),
                     ),

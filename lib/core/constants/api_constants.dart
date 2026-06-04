@@ -69,9 +69,16 @@ class ApiConstants {
   static String favoriteStatus(String songId) =>
       '/api/favorites/$songId/status';
 
-  /// Host của máy tính dev — dùng để thay thế "localhost" trong URL ảnh
-  /// trả về từ backend (MinIO/S3), vì device Android không resolve được "localhost".
-  static const String devHost = '192.168.123.14';
+  /// Host của backend — đọc từ compile-time define để CI có thể override.
+  ///
+  /// Mặc định: IP máy dev (192.168.123.14) dùng khi chạy trên thiết bị thật.
+  ///
+  /// Ghi đè khi chạy test trên emulator hoặc CI:
+  ///   flutter test ... --dart-define=API_HOST=10.0.2.2
+  static const String devHost = String.fromEnvironment(
+    'API_HOST',
+    defaultValue: '192.168.123.6',
+  );
 
   /// Chuyển relative path từ API thành absolute URL.
   /// Nếu URL chứa "localhost", thay bằng [devHost] để device có thể truy cập.
