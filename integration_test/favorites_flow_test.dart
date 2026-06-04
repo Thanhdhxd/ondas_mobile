@@ -374,11 +374,11 @@ void main() {
     });
 
     // TC16 – Loading indicator hiển thị khi đang fetch danh sách
-    // Trên device thật pump() không có duration vẫn advance real time một chút,
-    // nên fixed-frame pump không đảm bảo bắt được loading state.
-    // Giải pháp: dùng pumpUntilFound với timeout ngắn (3s) để poll —
-    // spinner xuất hiện ngay khi FavoritesScreen mount và bloc emit
-    // FavoritesListLoading (synchronous trước async API call).
+    // FavoritesScreen tạo BLoC và add FavoritesListRequested ngay lập tức.
+    // BLoC emit FavoritesListLoading đồng bộ trước await API call.
+    // Dùng 2 lần pump() sau push để mount screen và bắt loading state
+    // trước khi API response trả về — tránh flaky trên CI khi API nhanh
+    // (<250ms) làm spinner biến mất trước lần poll của pumpUntilFound.
     testWidgets('[TC16] Loading indicator hiển thị khi đang fetch', (
       tester,
     ) async {
@@ -393,14 +393,14 @@ void main() {
       final ctx = tester.element(find.byType(NavigationBar));
       GoRouter.of(ctx).push('/favorites');
 
-      // Poll cho đến khi spinner xuất hiện (FavoritesListLoading đã emit).
-      // Timeout 3s — đủ để screen mount; thường API mất > 100ms nên
-      // spinner sẽ xuất hiện trước khi FavoritesListLoaded thay thế nó.
-      await pumpUntilFound(
-        tester,
-        find.byType(CircularProgressIndicator),
-        timeout: const Duration(seconds: 3),
-      );
+      // Pump 2 frames: frame 1 bắt đầu route transition, frame 2 build
+      // FavoritesScreen → BLoC emit FavoritesListLoading đồng bộ (trước
+      // await API). Không dùng pumpUntilFound vì trên CI API trả về rất
+      // nhanh (<250ms), spinner có thể biến mất trước lần poll tiếp theo.
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
     // TC17 – Điều hướng vào /favorites sau khi đã đăng nhập, không redirect về login
@@ -412,7 +412,10 @@ void main() {
 
       final context1 = tester.element(find.byType(NavigationBar));
       GoRouter.of(context1).go('/home');
-      await tester.pumpAndSettle();
+      // Dùng pumpUntilFound thay vì pumpAndSettle() vì trên CI animation
+      // route có thể chưa xong sau 1 frame → NavigationBar chưa mount
+      // → tester.element() throw "Bad state: No element".
+      await pumpUntilFound(tester, find.byType(NavigationBar));
 
       final context2 = tester.element(find.byType(NavigationBar));
       GoRouter.of(context2).push('/favorites');
