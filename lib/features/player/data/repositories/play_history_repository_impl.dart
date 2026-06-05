@@ -7,7 +7,17 @@ class PlayHistoryRepositoryImpl implements PlayHistoryRepository {
   const PlayHistoryRepositoryImpl(this._datasource);
 
   @override
-  Future<void> recordPlayHistory({required String songId, String? source}) {
-    return _datasource.recordPlayHistory(songId: songId, source: source);
+  Future<void> recordPlayHistory({
+    required String songId,
+    String? source,
+    int? durationPlayedSeconds,
+    bool? completed,
+  }) {
+    return _datasource.recordPlayHistory(
+      songId: songId,
+      source: source,
+      durationPlayedSeconds: durationPlayedSeconds,
+      completed: completed,
+    );
   }
 }
