@@ -27,6 +27,8 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
   final AudioPlayerService _service;
   final RecordPlayHistoryUseCase _recordPlayHistory;
 
+  String? _currentSource;
+
   StreamSubscription<dynamic>? _statusSub;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration>? _durationSub;
@@ -70,6 +72,21 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     _subscribeToService();
   }
 
+  void _recordCurrentSongHistory({required bool completed}) {
+    final song = state.currentSong;
+    if (song != null) {
+      final duration = state.position.inSeconds;
+      if (duration >= 1) {
+        _recordPlayHistory(
+          songId: song.id,
+          source: _currentSource,
+          durationPlayedSeconds: duration,
+          completed: completed,
+        ).ignore();
+      }
+    }
+  }
+
   void _subscribeToService() {
     _statusSub = _service.statusStream.listen(
       (status) => add(PlayerStatusUpdated(status)),
@@ -96,8 +113,15 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
       ));
       return;
     }
+    
+    _recordCurrentSongHistory(
+      completed: state.duration.inSeconds > 0 && 
+                 state.position.inSeconds >= (state.duration.inSeconds - 5),
+    );
+
     final index = event.index.clamp(0, event.songs.length - 1);
     final song = event.songs[index];
+    _currentSource = event.source;
 
     emit(state.copyWith(
       status: PlayerStatus.loading,
@@ -111,8 +135,6 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
     try {
       await _playSong(songs: event.songs, index: index);
-      final songId = song.id;
-      _recordPlayHistory(songId: songId, source: event.source).ignore();
     } catch (e) {
       final cleanMsg = e.toString().replaceAll('Exception: ', '');
       emit(state.copyWith(
@@ -147,6 +169,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     SkipNextRequested event,
     Emitter<PlayerState> emit,
   ) async {
+    _recordCurrentSongHistory(completed: false);
     final nextIndex = state.currentIndex + 1;
     if (nextIndex < state.queue.length) {
       emit(state.copyWith(
@@ -164,6 +187,7 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     SkipPreviousRequested event,
     Emitter<PlayerState> emit,
   ) async {
+    _recordCurrentSongHistory(completed: false);
     if (state.position.inSeconds <= 3 && state.currentIndex > 0) {
       final prevIndex = state.currentIndex - 1;
       emit(state.copyWith(
@@ -204,11 +228,19 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
     final status = event.status as PlayerStatus;
     if (status == PlayerStatus.idle) {
       if (state.status == PlayerStatus.error) return;
+      _recordCurrentSongHistory(
+        completed: state.duration.inSeconds > 0 && 
+                   state.position.inSeconds >= (state.duration.inSeconds - 5),
+      );
       emit(state.copyWith(status: PlayerStatus.idle, clearCurrentSong: true));
       return;
     }
 
     final serviceSong = _service.currentSong;
+    if (state.currentSong != null && serviceSong != null && serviceSong.id != state.currentSong!.id) {
+      _recordCurrentSongHistory(completed: true);
+    }
+
     var nextIndex = state.currentIndex;
     // While switching tracks, keep the index chosen by PlaySongRequested. Stale
     // audio status events can still report the previous track/index briefly.
@@ -242,6 +274,10 @@ class PlayerBloc extends Bloc<PlayerEvent, PlayerState> {
 
   @override
   Future<void> close() async {
+    _recordCurrentSongHistory(
+      completed: state.duration.inSeconds > 0 && 
+                 state.position.inSeconds >= (state.duration.inSeconds - 5),
+    );
     await _statusSub?.cancel();
     await _positionSub?.cancel();
     await _durationSub?.cancel();

@@ -1,5 +1,10 @@
 abstract class RecordPlayHistoryUseCase {
-  Future<void> call({required String songId, String? source});
+  Future<void> call({
+    required String songId,
+    String? source,
+    int? durationPlayedSeconds,
+    bool? completed,
+  });
 }
 
 class RecordPlayHistoryParams {

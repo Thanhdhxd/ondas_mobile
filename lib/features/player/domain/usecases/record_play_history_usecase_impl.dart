@@ -7,7 +7,17 @@ class RecordPlayHistoryUseCaseImpl implements RecordPlayHistoryUseCase {
   const RecordPlayHistoryUseCaseImpl(this._repository);
 
   @override
-  Future<void> call({required String songId, String? source}) {
-    return _repository.recordPlayHistory(songId: songId, source: source);
+  Future<void> call({
+    required String songId,
+    String? source,
+    int? durationPlayedSeconds,
+    bool? completed,
+  }) {
+    return _repository.recordPlayHistory(
+      songId: songId,
+      source: source,
+      durationPlayedSeconds: durationPlayedSeconds,
+      completed: completed,
+    );
   }
 }
