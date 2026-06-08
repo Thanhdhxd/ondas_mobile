@@ -165,6 +165,16 @@ enum Str {
   profileLogoutConfirm,
   profileLogoutButton,
 
+  // Stats screen
+  statsTitle,
+  statsListeningTime,
+  statsTotalSongsPlayed,
+  statsTopSongs,
+  statsTopArtists,
+  statsPlayCount,
+  statsHours,
+  statsMinutes,
+
   // History screen
   historyTitle,
   historyEmpty,

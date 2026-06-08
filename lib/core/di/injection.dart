@@ -151,6 +151,10 @@ import 'package:ondas_mobile/features/profile/domain/usecases/get_play_history_u
 import 'package:ondas_mobile/features/profile/domain/usecases/get_play_history_usecase_impl.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/history_bloc.dart';
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dart';
+import 'package:ondas_mobile/features/stats/data/datasources/stats_remote_datasource.dart';
+import 'package:ondas_mobile/features/stats/data/repositories/stats_repository_impl.dart';
+import 'package:ondas_mobile/features/stats/domain/repositories/stats_repository.dart';
+import 'package:ondas_mobile/features/stats/presentation/bloc/stats_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -264,6 +268,17 @@ Future<void> setupDependencies() async {
       deletePlayHistoryItemUseCase: sl<DeletePlayHistoryItemUseCase>(),
       clearPlayHistoryUseCase: sl<ClearPlayHistoryUseCase>(),
     ),
+  );
+
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<StatsRemoteDatasource>(
+    () => StatsRemoteDatasourceImpl(sl<DioClient>()),
+  );
+  sl.registerLazySingleton<StatsRepository>(
+    () => StatsRepositoryImpl(sl<StatsRemoteDatasource>()),
+  );
+  sl.registerFactory<StatsBloc>(
+    () => StatsBloc(sl<StatsRepository>()),
   );
 
   // ── Home ──────────────────────────────────────────────────────────────────

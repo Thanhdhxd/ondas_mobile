@@ -170,6 +170,16 @@ const Map<Str, String> _vi = {
   Str.profileLogoutConfirm: 'Bạn có chắc muốn đăng xuất không?',
   Str.profileLogoutButton: 'Đăng xuất',
 
+  // Stats screen
+  Str.statsTitle: 'Thống kê cá nhân',
+  Str.statsListeningTime: 'Thời gian nghe nhạc',
+  Str.statsTotalSongsPlayed: 'Tổng số bài đã nghe',
+  Str.statsTopSongs: 'Bài hát yêu thích nhất',
+  Str.statsTopArtists: 'Nghệ sĩ yêu thích nhất',
+  Str.statsPlayCount: 'lượt nghe',
+  Str.statsHours: 'giờ',
+  Str.statsMinutes: 'phút',
+
   // History screen
   Str.historyTitle: 'Lịch sử nghe nhạc',
   Str.historyEmpty: 'Chưa có lịch sử nghe nhạc',
@@ -395,6 +405,16 @@ const Map<Str, String> _en = {
   Str.profileLogoutTitle: 'Log Out',
   Str.profileLogoutConfirm: 'Are you sure you want to log out?',
   Str.profileLogoutButton: 'Log Out',
+
+  // Stats screen
+  Str.statsTitle: 'My Statistics',
+  Str.statsListeningTime: 'Listening Time',
+  Str.statsTotalSongsPlayed: 'Total Songs Played',
+  Str.statsTopSongs: 'Top Songs',
+  Str.statsTopArtists: 'Top Artists',
+  Str.statsPlayCount: 'plays',
+  Str.statsHours: 'hrs',
+  Str.statsMinutes: 'mins',
 
   // History screen
   Str.historyTitle: 'Listening History',
