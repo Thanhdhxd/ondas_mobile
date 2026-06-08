@@ -317,6 +317,12 @@ class _ContentView extends StatelessWidget {
             label: t(Str.profileListeningHistory, l),
             onTap: () => context.push('/history'),
           ),
+          ProfileMenuItemWidget(
+            key: const Key('profileScreen_statsButton'),
+            icon: Icons.bar_chart,
+            label: t(Str.statsTitle, l),
+            onTap: () => context.push('/profile/stats'),
+          ),
           const SizedBox(height: AppSpacing.md),
           _SectionDivider(title: t(Str.profileSectionSession, l)),
           ProfileMenuItemWidget(

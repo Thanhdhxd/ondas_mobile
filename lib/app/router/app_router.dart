@@ -24,6 +24,8 @@ import 'package:ondas_mobile/features/profile/presentation/bloc/profile_bloc.dar
 import 'package:ondas_mobile/features/profile/presentation/bloc/profile_event.dart';
 import 'package:ondas_mobile/features/profile/presentation/screens/history_screen.dart';
 import 'package:ondas_mobile/features/profile/presentation/screens/profile_screen.dart';
+import 'package:ondas_mobile/features/stats/presentation/bloc/stats_bloc.dart';
+import 'package:ondas_mobile/features/stats/presentation/screens/stats_screen.dart';
 import 'package:ondas_mobile/features/search/presentation/screens/search_screen.dart';
 import 'package:ondas_mobile/features/favorites/presentation/screens/favorites_screen.dart';
 import 'package:ondas_mobile/features/songs/presentation/screens/song_list_screen.dart';
@@ -122,6 +124,14 @@ class AppRouter {
           builder: (context, state) => BlocProvider<HistoryBloc>(
             create: (_) => sl<HistoryBloc>(),
             child: const HistoryScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/profile/stats',
+          name: 'stats',
+          builder: (context, state) => BlocProvider<StatsBloc>(
+            create: (_) => sl<StatsBloc>(),
+            child: const StatsScreen(),
           ),
         ),
         GoRoute(

@@ -59,6 +59,11 @@ class ApiConstants {
   static String playlistSongsReorder(String id) =>
       '/api/playlists/$id/songs/reorder';
 
+  // Stats
+  static const String statsListeningTime = '/api/stats/me/listening-time';
+  static const String statsTopSongs = '/api/stats/me/top-songs';
+  static const String statsTopArtists = '/api/stats/me/top-artists';
+
   // System playlists (read-only for users)
   static const String systemPlaylists = '/api/system-playlists';
   static String systemPlaylistById(String id) => '/api/system-playlists/$id';
@@ -77,7 +82,7 @@ class ApiConstants {
   ///   flutter test ... --dart-define=API_HOST=10.0.2.2
   static const String devHost = String.fromEnvironment(
     'API_HOST',
-    defaultValue: '192.168.1.105',
+    defaultValue: '192.168.1.103',
   );
 
   /// Chuyển relative path từ API thành absolute URL.
